@@ -260,11 +260,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
 
                 await addOrder(data);
-                console.log('Order added successfully');
                 await loadData();
                 document.getElementById('orderForm').reset();
                 document.getElementById('orderDate').value = formatDate(getESTTime());
-                alert('充值记录已添加');
             } catch (error) {
                 console.error('添加失败：', error);
                 alert('添加失败：' + error.message);
@@ -286,11 +284,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
 
                 await addOrder(data);
-                console.log('Order added successfully');
                 await loadData();
                 document.getElementById('orderForm').reset();
                 document.getElementById('orderDate').value = formatDate(getESTTime());
-                alert('出款记录已添加');
             } catch (error) {
                 console.error('添加失败：', error);
                 alert('添加失败：' + error.message);

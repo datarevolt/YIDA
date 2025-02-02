@@ -76,6 +76,11 @@
 
         <section class="content">
             <div class="container-fluid">
+                <div class="mb-3">
+                    <button id="exportOrders" class="btn btn-success">
+                        <i class="fas fa-file-excel"></i> 导出订单数据
+                    </button>
+                </div>
                 <div class="card">
                     <div class="card-body">
                         <div class="table-responsive">
@@ -225,6 +230,39 @@ document.addEventListener('DOMContentLoaded', async () => {
                     console.error('Error deleting order:', error);
                     alert('删除失败：' + error.message);
                 }
+            }
+        });
+
+        // 添加导出功能
+        const exportToExcel = (data, filename) => {
+            const headers = ['提交时间', '订单日期', '用户名', '金额', '类型'];
+            let csvContent = '\uFEFF' + headers.join(',') + '\n'; // 添加 BOM 以支持中文
+
+            data.forEach(item => {
+                const row = [
+                    new Date(item.submitTime).toLocaleString(),
+                    new Date(item.orderDate).toLocaleDateString(),
+                    item.userId,
+                    parseFloat(item.amount).toFixed(2),
+                    item.type === 'deposit' ? '充值' : '出款'
+                ];
+                csvContent += row.join(',') + '\n';
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+        };
+
+        document.getElementById('exportOrders').addEventListener('click', async () => {
+            try {
+                const orders = await getAllOrders();
+                exportToExcel(orders, `订单数据_${new Date().toLocaleDateString()}.csv`);
+            } catch (error) {
+                console.error('导出失败：', error);
+                alert('导出失败：' + error.message);
             }
         });
 

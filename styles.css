@@ -11,11 +11,13 @@
 
 .table td {
     vertical-align: middle;
+    padding: 0.5rem;
 }
 
 /* 输入框样式 */
 .note-input {
-    min-width: 150px;
+    min-width: 200px;
+    resize: vertical;
 }
 
 /* 按钮样式 */
@@ -147,4 +149,14 @@
 /* 日期输入框样式 */
 input[type="date"] {
     padding: .375rem .75rem;
+}
+
+/* 导出按钮样式 */
+.btn-success {
+    margin-right: 10px;
+}
+
+/* 备注列宽度 */
+.table td:nth-child(6) {
+    min-width: 220px;
 }

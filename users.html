@@ -70,6 +70,11 @@
 
         <section class="content">
             <div class="container-fluid">
+                <div class="mb-3">
+                    <button id="exportUsers" class="btn btn-success">
+                        <i class="fas fa-file-excel"></i> 导出用户数据
+                    </button>
+                </div>
                 <div class="card">
                     <div class="card-body">
                         <div class="table-responsive">
@@ -141,9 +146,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <td>${parseFloat(user.totalWithdrawal || 0).toFixed(2)}</td>
                         <td>${(parseFloat(user.totalDeposit || 0) - parseFloat(user.totalWithdrawal || 0)).toFixed(2)}</td>
                         <td>
-                            <input type="text" class="form-control note-input" 
-                                   value="${user.note || ''}" 
-                                   data-user-id="${user.userId}">
+                            <textarea class="form-control note-input" 
+                                    data-user-id="${user.userId}"
+                                    rows="2">${user.note || ''}</textarea>
                         </td>
                         <td>
                             <button class="btn btn-danger btn-sm delete-user" 
@@ -203,6 +208,40 @@ document.addEventListener('DOMContentLoaded', async () => {
                     console.error('Error deleting user:', error);
                     alert('删除失败：' + error.message);
                 }
+            }
+        });
+
+        // 添加导出功能
+        const exportToExcel = (data, filename) => {
+            const headers = ['用户名', '注册时间', '累计充值', '累计出款', '纯利', '备注'];
+            let csvContent = '\uFEFF' + headers.join(',') + '\n'; // 添加 BOM 以支持中文
+
+            data.forEach(item => {
+                const row = [
+                    item.userId,
+                    new Date(item.registerTime).toLocaleString(),
+                    parseFloat(item.totalDeposit || 0).toFixed(2),
+                    parseFloat(item.totalWithdrawal || 0).toFixed(2),
+                    (parseFloat(item.totalDeposit || 0) - parseFloat(item.totalWithdrawal || 0)).toFixed(2),
+                    `"${item.note || ''}"`  // 用引号包裹备注，避免逗号问题
+                ];
+                csvContent += row.join(',') + '\n';
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+        };
+
+        document.getElementById('exportUsers').addEventListener('click', async () => {
+            try {
+                const users = await getAllUsers();
+                exportToExcel(users, `用户数据_${new Date().toLocaleDateString()}.csv`);
+            } catch (error) {
+                console.error('导出失败：', error);
+                alert('导出失败：' + error.message);
             }
         });
 
