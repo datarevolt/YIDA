@@ -168,6 +168,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('orderDate').value = formatDate(now);
         document.getElementById('monthFilter').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
         
+        // 从 localStorage 获取上次输入的用户名
+        const lastUserId = localStorage.getItem('lastUserId');
+        if (lastUserId) {
+            document.getElementById('userId').value = lastUserId;
+        }
+
+        // 用户名输入框点击时清空
+        document.getElementById('userId').addEventListener('focus', function() {
+            this.value = '';
+        });
+
         // 初始化图表
         const chart = new ApexCharts(document.querySelector("#trendChart"), {
             chart: { 
@@ -251,6 +262,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 绑定事件
         document.getElementById('monthFilter').addEventListener('change', loadData);
         
+        // 充值按钮点击事件
         document.getElementById('depositBtn').addEventListener('click', async () => {
             try {
                 const data = {
@@ -265,16 +277,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                     return;
                 }
 
+                // 保存当前用户名到 localStorage
+                localStorage.setItem('lastUserId', data.userId);
+
                 await addOrder(data);
                 await loadData();
+                // 重置表单时保留用户名
+                const currentUserId = data.userId;
                 document.getElementById('orderForm').reset();
                 document.getElementById('orderDate').value = formatDate(new Date());
+                document.getElementById('userId').value = currentUserId;
             } catch (error) {
                 console.error('添加失败：', error);
                 alert('添加失败：' + error.message);
             }
         });
 
+        // 出款按钮点击事件
         document.getElementById('withdrawalBtn').addEventListener('click', async () => {
             try {
                 const data = {
@@ -289,10 +308,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     return;
                 }
 
+                // 保存当前用户名到 localStorage
+                localStorage.setItem('lastUserId', data.userId);
+
                 await addOrder(data);
                 await loadData();
+                // 重置表单时保留用户名
+                const currentUserId = data.userId;
                 document.getElementById('orderForm').reset();
                 document.getElementById('orderDate').value = formatDate(new Date());
+                document.getElementById('userId').value = currentUserId;
             } catch (error) {
                 console.error('添加失败：', error);
                 alert('添加失败：' + error.message);
