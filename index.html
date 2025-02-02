@@ -162,10 +162,9 @@
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         await initDB();
-        console.log('Database initialized successfully');
         
-        // 设置默认日期为当前美东时间
-        const now = getESTTime();
+        // 设置默认日期为当前本地时间
+        const now = new Date();
         document.getElementById('orderDate').value = formatDate(now);
         document.getElementById('monthFilter').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
         
@@ -188,16 +187,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const monthStr = document.getElementById('monthFilter').value;
                 const [year, month] = monthStr.split('-');
-                const date = new Date(year, month - 1);
                 
                 const orders = await getAllOrders();
                 console.log('Loaded orders:', orders);
                 
-                // 过滤当月订单
+                // 根据订单日期筛选当月订单，而不是提交时间
                 const monthlyOrders = orders.filter(order => {
-                    const orderDate = new Date(order.orderDate);
-                    return orderDate.getFullYear() === parseInt(year) && 
-                           orderDate.getMonth() === parseInt(month) - 1;
+                    const orderDate = order.orderDate.split('T')[0];  // 只取日期部分
+                    return orderDate.startsWith(`${year}-${month}`);
                 });
 
                 // 更新统计卡片
@@ -214,7 +211,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('totalWithdrawal').textContent = totals.withdrawal.toFixed(2);
                 document.getElementById('netAmount').textContent = (totals.deposit - totals.withdrawal).toFixed(2);
 
-                // 更新趋势图
+                // 更新趋势图，使用订单日期
                 const dailyData = {};
                 monthlyOrders.forEach(order => {
                     const day = order.orderDate.split('T')[0];
@@ -271,7 +268,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 await addOrder(data);
                 await loadData();
                 document.getElementById('orderForm').reset();
-                document.getElementById('orderDate').value = formatDate(getESTTime());
+                document.getElementById('orderDate').value = formatDate(new Date());
             } catch (error) {
                 console.error('添加失败：', error);
                 alert('添加失败：' + error.message);
@@ -295,7 +292,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 await addOrder(data);
                 await loadData();
                 document.getElementById('orderForm').reset();
-                document.getElementById('orderDate').value = formatDate(getESTTime());
+                document.getElementById('orderDate').value = formatDate(new Date());
             } catch (error) {
                 console.error('添加失败：', error);
                 alert('添加失败：' + error.message);

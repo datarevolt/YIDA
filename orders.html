@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 tbody.innerHTML = filteredOrders.map(order => `
                     <tr class="${order.type === 'deposit' ? 'table-info' : 'table-danger'}">
                         <td>${new Date(order.submitTime).toLocaleString()}</td>
-                        <td>${new Date(order.orderDate).toLocaleDateString()}</td>
+                        <td>${order.orderDate}</td>
                         <td>${order.userId}</td>
                         <td>${parseFloat(order.amount).toFixed(2)}</td>
                         <td>${order.type === 'deposit' ? '充值' : '出款'}</td>

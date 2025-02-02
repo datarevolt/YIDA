@@ -33,15 +33,13 @@ const initDB = () => {
     });
 };
 
-// 获取美东时间
-const getESTTime = (date = new Date()) => {
-    return new Date(date.toLocaleString('en-US', { timeZone: 'America/New_York' }));
-};
-
 // 格式化日期
 const formatDate = (date) => {
     const d = new Date(date);
-    return d.toISOString().split('T')[0];
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 };
 
 // 添加订单
@@ -52,50 +50,51 @@ const addOrder = async (data) => {
             const orderStore = transaction.objectStore('orders');
             const userStore = transaction.objectStore('users');
 
+            // 准备订单数据
             const orderData = {
                 ...data,
                 submitTime: new Date().toISOString(),
-                orderDate: new Date(data.orderDate).toISOString(),
+                orderDate: data.orderDate,
                 amount: parseFloat(data.amount)
             };
 
-            // 先检查用户是否存在
+            // 检查并更新用户数据
             const getUserRequest = userStore.get(data.userId);
-            
             getUserRequest.onsuccess = () => {
-                let user = getUserRequest.result || {
-                    userId: data.userId,
-                    registerTime: new Date().toISOString(),
-                    totalDeposit: 0,
-                    totalWithdrawal: 0,
-                    note: ''
-                };
+                let user = getUserRequest.result;
+                
+                if (!user) {
+                    // 新用户：直接使用订单日期字符串，不做任何转换
+                    user = {
+                        userId: data.userId,
+                        registerTime: orderData.orderDate, // 直接使用订单日期字符串
+                        totalDeposit: 0,
+                        totalWithdrawal: 0,
+                        note: ''
+                    };
+                }
 
-                // 更新用户统计
+                // 更新用户统计数据
                 if (data.type === 'deposit') {
-                    user.totalDeposit = (parseFloat(user.totalDeposit) || 0) + orderData.amount;
+                    user.totalDeposit = (parseFloat(user.totalDeposit) || 0) + parseFloat(data.amount);
                 } else {
-                    user.totalWithdrawal = (parseFloat(user.totalWithdrawal) || 0) + orderData.amount;
+                    user.totalWithdrawal = (parseFloat(user.totalWithdrawal) || 0) + parseFloat(data.amount);
                 }
 
                 // 保存用户数据
-                userStore.put(user);
-                
-                // 保存订单数据
-                orderStore.add(orderData);
+                const putUserRequest = userStore.put(user);
+                putUserRequest.onsuccess = () => {
+                    // 保存订单数据
+                    const addOrderRequest = orderStore.add(orderData);
+                    addOrderRequest.onsuccess = () => resolve();
+                    addOrderRequest.onerror = () => reject(new Error('保存订单失败'));
+                };
+                putUserRequest.onerror = () => reject(new Error('更新用户数据失败'));
             };
 
-            transaction.oncomplete = () => {
-                console.log('Transaction completed: database modification finished.');
-                resolve();
-            };
-            
-            transaction.onerror = () => {
-                console.error('Transaction error:', transaction.error);
-                reject(transaction.error);
-            };
+            getUserRequest.onerror = () => reject(new Error('获取用户数据失败'));
+            transaction.onerror = () => reject(transaction.error);
         } catch (error) {
-            console.error('Error in addOrder:', error);
             reject(error);
         }
     });

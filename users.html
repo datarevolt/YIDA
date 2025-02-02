@@ -141,7 +141,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 tbody.innerHTML = filteredUsers.map(user => `
                     <tr>
                         <td>${user.userId}</td>
-                        <td>${new Date(user.registerTime).toLocaleString()}</td>
+                        <td>${user.registerTime}</td>
                         <td>${parseFloat(user.totalDeposit || 0).toFixed(2)}</td>
                         <td>${parseFloat(user.totalWithdrawal || 0).toFixed(2)}</td>
                         <td>${(parseFloat(user.totalDeposit || 0) - parseFloat(user.totalWithdrawal || 0)).toFixed(2)}</td>
