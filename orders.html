@@ -300,8 +300,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 filteredOrders.sort((a, b) => {
                     if (sortField === 'amount') {
                         return b.amount - a.amount;
+                    } else if (sortField === 'orderDate') {
+                        return new Date(b.orderDate) - new Date(a.orderDate);
+                    } else {
+                        // 默认按提交时间降序排序（最新的在最上面）
+                        return new Date(b.submitTime) - new Date(a.submitTime);
                     }
-                    return new Date(b[sortField]) - new Date(a[sortField]);
                 });
 
                 // 渲染表格
