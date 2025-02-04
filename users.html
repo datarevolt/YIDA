@@ -268,12 +268,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const isPinnedB = pinnedUsers.includes(b.userId);
                     if (isPinnedA !== isPinnedB) return isPinnedB ? 1 : -1;
                     
-                    // 再按选定字段排序
-                    if (sortField === 'netAmount') {
-                        return (parseFloat(b.totalDeposit) - parseFloat(b.totalWithdrawal)) - 
-                               (parseFloat(a.totalDeposit) - parseFloat(a.totalWithdrawal));
+                    // 默认按注册时间降序排序
+                    const timeA = new Date(a.registerTime || 0).getTime();
+                    const timeB = new Date(b.registerTime || 0).getTime();
+                    
+                    // 如果选择了其他排序字段且不是注册时间，则使用选择的字段排序
+                    if (sortField && sortField !== 'registerTime') {
+                        if (sortField === 'netAmount') {
+                            return (parseFloat(b.totalDeposit) - parseFloat(b.totalWithdrawal)) - 
+                                   (parseFloat(a.totalDeposit) - parseFloat(a.totalWithdrawal));
+                        }
+                        return parseFloat(b[sortField] || 0) - parseFloat(a[sortField] || 0);
                     }
-                    return parseFloat(b[sortField] || 0) - parseFloat(a[sortField] || 0);
+                    
+                    // 默认返回注册时间的比较结果
+                    return timeB - timeA;
                 });
 
                 const tbody = document.getElementById('userTableBody');
