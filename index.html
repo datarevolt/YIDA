@@ -16,6 +16,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+    <script src="main.js"></script>
+    <script src="plans.js"></script>
 </head>
 <body class="hold-transition sidebar-mini">
 <div class="wrapper">
@@ -24,6 +30,29 @@
         <ul class="navbar-nav">
             <li class="nav-item">
                 <a class="nav-link" href="#" data-widget="pushmenu"><i class="fas fa-bars"></i></a>
+            </li>
+        </ul>
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item mr-3">
+                <span class="nav-link" id="currentTime"></span>
+            </li>
+            <li class="nav-item dropdown mr-3">
+                <a class="nav-link" data-toggle="dropdown" href="#" id="planNotification">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge badge-warning navbar-badge" id="planCount">0</span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                    <span class="dropdown-header">计划提醒</span>
+                    <div class="dropdown-divider"></div>
+                    <div id="planList" style="max-height: 300px; overflow-y: auto;"></div>
+                    <div class="dropdown-divider"></div>
+                    <a href="plans.html" class="dropdown-item dropdown-footer">查看所有计划</a>
+                </div>
+            </li>
+            <li class="nav-item mr-3">
+                <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addPlanModal">
+                    <i class="fas fa-plus"></i> 添加计划
+                </button>
             </li>
         </ul>
     </nav>
@@ -48,6 +77,16 @@
                             <i class="nav-icon fas fa-list"></i> 订单记录
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="plans.html" class="nav-link">
+                            <i class="nav-icon fas fa-calendar"></i> 计划管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="settings.html" class="nav-link">
+                            <i class="nav-icon fas fa-cog"></i> 设置
+                        </a>
+                    </li>
                 </ul>
             </nav>
         </div>
@@ -57,8 +96,20 @@
     <div class="content-wrapper">
         <section class="content-header">
             <div class="container-fluid">
-                <h1>数据看板</h1>
-                <div class="row mb-2">
+                <div class="row align-items-center">
+                    <div class="col-sm-6">
+                        <h1>数据看板</h1>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="alert alert-warning mb-0 text-right" role="alert">
+                            <i class="fas fa-bullhorn mr-2"></i>
+                            <strong>公告：</strong>
+                            更新后有BUG请到设置恢复原厂设置，还有BUG找
+                            <a href="https://t.me/YiDa_6" target="_blank" class="alert-link">益达</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-2 mt-2">
                     <div class="col-sm-6">
                         <div class="input-group">
                             <input type="month" id="monthFilter" class="form-control">
@@ -112,31 +163,69 @@
 
                 <!-- 统计卡片 -->
                 <div class="row">
-                    <div class="col-lg-4 col-6">
+                    <!-- 代办计划卡片 -->
+                    <div class="col-lg-3 col-6">
+                        <div class="small-box bg-success" id="todoCard">
+                            <div class="inner">
+                                <div class="todo-content">
+                                    <div class="todo-left">
+                                        <h3 id="todoCount">0</h3>
+                                        <p>代办计划</p>
+                                    </div>
+                                    <div class="todo-right">
+                                        <div id="todoUser" class="text-sm text-bold"></div>
+                                        <div id="todoContent" class="text-sm text-truncate"></div>
+                                        <div id="todoTimeLeft" class="text-sm d-flex justify-content-end align-items-center">
+                                            <button class="btn btn-sm btn-light d-none" id="confirmBtn" onclick="PlansManager.confirmExpired()">
+                                                确认过期
+                                            </button>
+                                            <span id="timeLeftText"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="icon">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                            <a href="plans.html" class="small-box-footer">
+                                更多信息 <i class="fas fa-arrow-circle-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <!-- 当月累计充值 -->
+                    <div class="col-lg-3 col-6">
                         <div class="small-box bg-info">
-                            <div class="inner">
-                                <h3 id="totalDeposit">0</h3>
-                                <p>当月累计充值</p>
+                            <div class="inner" style="padding-bottom: 34px;">
+                                <h3 id="totalDeposit" style="font-size: 2.5rem;">0</h3>
+                                <p style="font-size: 1.2rem;">当月累计充值</p>
                             </div>
-                            <div class="icon"><i class="fas fa-coins"></i></div>
+                            <div class="icon">
+                                <i class="fas fa-coins"></i>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-lg-4 col-6">
+                    <!-- 当月累计出款 -->
+                    <div class="col-lg-3 col-6">
                         <div class="small-box bg-danger">
-                            <div class="inner">
-                                <h3 id="totalWithdrawal">0</h3>
-                                <p>当月累计出款</p>
+                            <div class="inner" style="padding-bottom: 34px;">
+                                <h3 id="totalWithdrawal" style="font-size: 2.5rem;">0</h3>
+                                <p style="font-size: 1.2rem;">当月累计出款</p>
                             </div>
-                            <div class="icon"><i class="fas fa-wallet"></i></div>
+                            <div class="icon">
+                                <i class="fas fa-wallet"></i>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-lg-4 col-6">
+                    <!-- 净额 -->
+                    <div class="col-lg-3 col-6">
                         <div class="small-box bg-success">
-                            <div class="inner">
-                                <h3 id="netAmount">0</h3>
-                                <p>净额</p>
+                            <div class="inner" style="padding-bottom: 34px;">
+                                <h3 id="netAmount" style="font-size: 2.5rem;">0</h3>
+                                <p style="font-size: 1.2rem;">净额</p>
                             </div>
-                            <div class="icon"><i class="fas fa-chart-line"></i></div>
+                            <div class="icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -152,20 +241,75 @@
                 </div>
             </div>
         </section>
+
+        <!-- 添加 Bug 反馈按钮和图片 -->
+        <div class="container-fluid mb-4">
+            <div class="row align-items-center justify-content-center">
+                <div class="col-auto">
+                    <a href="https://t.me/YiDa_6" target="_blank" class="btn btn-warning">
+                        <i class="fas fa-bug mr-2"></i>提交BUG
+                    </a>
+                </div>
+                <div class="col-auto">
+                    <img src="YIDA.jpg" alt="YIDA" style="height: 50px; width: 50px; border-radius: 50%; object-fit: cover;">
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
-<script src="main.js"></script>
+<!-- 新增计划模态框 -->
+<div class="modal fade" id="addPlanModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">新增计划</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="planForm">
+                    <div class="form-group">
+                        <label>用户名</label>
+                        <input type="text" id="planUserId" class="form-control" required 
+                               placeholder="请输入用户名">
+                    </div>
+                    <div class="form-group">
+                        <label>计划内容</label>
+                        <textarea id="planContent" class="form-control" rows="3" required 
+                                placeholder="请输入计划内容"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>计划时间</label>
+                        <input type="datetime-local" id="planTime" class="form-control" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="savePlan">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
     try {
+        // 检查是否首次使用
+        if (!localStorage.getItem('timeZoneNotified')) {
+            alert('请先到设置页面设置时区！避免影响数据统计');
+            localStorage.setItem('timeZoneNotified', 'true');
+        }
+
+        console.log('Initializing database...');
         await initDB();
-        
+        console.log('Database initialized successfully');
+
         // 设置默认日期为当前本地时间
         const now = new Date();
-        document.getElementById('orderDate').value = formatDate(now);
+        document.getElementById('orderDate').value = TimeZoneManager.formatDate(now);
         document.getElementById('monthFilter').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
         
         // 从 localStorage 获取上次输入的用户名
@@ -236,7 +380,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const days = Array.from({length: 31}, (_, i) => {
                     const d = new Date(year, month - 1, i + 1);
-                    return formatDate(d);
+                    return TimeZoneManager.formatDate(d);
                 }).filter(d => {
                     const [y, m] = d.split('-');
                     return parseInt(m) === parseInt(month);
@@ -265,11 +409,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 充值按钮点击事件
         document.getElementById('depositBtn').addEventListener('click', async () => {
             try {
+                const currentTime = TimeZoneManager.getCurrentTime();
                 const data = {
                     userId: document.getElementById('userId').value,
                     orderDate: document.getElementById('orderDate').value,
                     amount: parseFloat(document.getElementById('amount').value),
-                    type: 'deposit'
+                    type: 'deposit',
+                    submitTime: currentTime.toLocaleString('zh-CN'),
+                    timeZone: TimeZoneManager.currentTimeZone
                 };
 
                 if (!data.userId || !data.amount || isNaN(data.amount)) {
@@ -285,7 +432,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // 重置表单时保留用户名
                 const currentUserId = data.userId;
                 document.getElementById('orderForm').reset();
-                document.getElementById('orderDate').value = formatDate(new Date());
+                document.getElementById('orderDate').value = TimeZoneManager.formatDate(new Date());
                 document.getElementById('userId').value = currentUserId;
             } catch (error) {
                 console.error('添加失败：', error);
@@ -296,11 +443,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 出款按钮点击事件
         document.getElementById('withdrawalBtn').addEventListener('click', async () => {
             try {
+                const currentTime = TimeZoneManager.getCurrentTime();
                 const data = {
                     userId: document.getElementById('userId').value,
                     orderDate: document.getElementById('orderDate').value,
                     amount: parseFloat(document.getElementById('amount').value),
-                    type: 'withdrawal'
+                    type: 'withdrawal',
+                    submitTime: currentTime.toLocaleString('zh-CN'),
+                    timeZone: TimeZoneManager.currentTimeZone
                 };
 
                 if (!data.userId || !data.amount || isNaN(data.amount)) {
@@ -316,13 +466,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // 重置表单时保留用户名
                 const currentUserId = data.userId;
                 document.getElementById('orderForm').reset();
-                document.getElementById('orderDate').value = formatDate(new Date());
+                document.getElementById('orderDate').value = TimeZoneManager.formatDate(new Date());
                 document.getElementById('userId').value = currentUserId;
             } catch (error) {
                 console.error('添加失败：', error);
                 alert('添加失败：' + error.message);
             }
         });
+
+        // 添加表单回车提交事件
+        document.getElementById('orderForm').addEventListener('keypress', async (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // 阻止默认表单提交
+                document.getElementById('depositBtn').click(); // 触发充值按钮点击
+            }
+        });
+
+        // 初始化代办计划状态
+        await PlansManager.checkTodoStatus();
 
         // 初始加载数据
         await loadData();

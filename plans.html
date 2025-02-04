@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>财务仪表盘 - 计划管理</title>
+    
+    <!-- CSS 文件 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- JavaScript 文件 -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+    <script src="main.js"></script>
+    <script src="plans.js"></script>
+</head>
+<body class="hold-transition sidebar-mini">
+<div class="wrapper">
+    <!-- 导航栏 -->
+    <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-widget="pushmenu"><i class="fas fa-bars"></i></a>
+            </li>
+        </ul>
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item mr-3">
+                <span class="nav-link" id="currentTime"></span>
+            </li>
+            <li class="nav-item dropdown mr-3">
+                <a class="nav-link" data-toggle="dropdown" href="#" id="planNotification">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge badge-warning navbar-badge" id="planCount">0</span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                    <span class="dropdown-header">计划提醒</span>
+                    <div class="dropdown-divider"></div>
+                    <div id="planList" style="max-height: 300px; overflow-y: auto;"></div>
+                    <div class="dropdown-divider"></div>
+                    <a href="plans.html" class="dropdown-item dropdown-footer">查看所有计划</a>
+                </div>
+            </li>
+            <li class="nav-item mr-3">
+                <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addPlanModal">
+                    <i class="fas fa-plus"></i> 添加计划
+                </button>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- 侧边栏 -->
+    <aside class="main-sidebar sidebar-dark-primary elevation-4">
+        <div class="sidebar">
+            <nav class="mt-2">
+                <ul class="nav nav-pills nav-sidebar flex-column">
+                    <li class="nav-item">
+                        <a href="index.html" class="nav-link">
+                            <i class="nav-icon fas fa-home"></i> 首页
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="users.html" class="nav-link">
+                            <i class="nav-icon fas fa-users"></i> 用户管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="orders.html" class="nav-link">
+                            <i class="nav-icon fas fa-list"></i> 订单记录
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="plans.html" class="nav-link active">
+                            <i class="nav-icon fas fa-calendar"></i> 计划管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="settings.html" class="nav-link">
+                            <i class="nav-icon fas fa-cog"></i> 设置
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </aside>
+
+    <!-- 内容区 -->
+    <div class="content-wrapper">
+        <section class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1>计划管理</h1>
+                    </div>
+                    <div class="col-sm-6 text-right">
+                        <button class="btn btn-danger" id="clearAllPlans">
+                            <i class="fas fa-trash"></i> 清除所有计划
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="content">
+            <div class="container-fluid">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>计划时间</th>
+                                        <th>用户名</th>
+                                        <th>计划内容</th>
+                                        <th>剩余时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="planTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- 新增计划模态框 -->
+<div class="modal fade" id="addPlanModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">新增计划</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="planForm">
+                    <div class="form-group">
+                        <label>用户名</label>
+                        <input type="text" id="planUserId" class="form-control" required 
+                               placeholder="请输入用户名">
+                    </div>
+                    <div class="form-group">
+                        <label>计划内容</label>
+                        <textarea id="planContent" class="form-control" rows="3" required 
+                                placeholder="请输入计划内容"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>计划时间</label>
+                        <input type="datetime-local" id="planTime" class="form-control" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="savePlan">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html> 
