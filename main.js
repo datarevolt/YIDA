@@ -1,7 +1,7 @@
 // 数据库初始化
 let db;
 const DB_NAME = 'FinanceDB';
-const DB_VERSION = 2;  // 更新数据库版本号
+const DB_VERSION = 3;  // 修改为当前版本号
 
 // 获取系统时区，但默认使用 'local'
 const systemTZ = 'local';  // 改为直接使用 'local'
@@ -9,7 +9,7 @@ let currentTimeZone = localStorage.getItem('timeZone') || systemTZ;
 
 const initDB = () => {
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        const request = indexedDB.open(DB_NAME, DB_VERSION + 1);
         
         request.onerror = () => {
             console.error('数据库打开失败:', request.error);
@@ -48,6 +48,11 @@ const initDB = () => {
                 planStore.createIndex('userId', 'userId', { unique: false });
                 planStore.createIndex('planTime', 'planTime', { unique: false });
                 planStore.createIndex('status', 'status', { unique: false });
+            }
+
+            // 添加 pinnedUsers store (新增)
+            if (!upgradeDB.objectStoreNames.contains('pinnedUsers')) {
+                upgradeDB.createObjectStore('pinnedUsers', { keyPath: 'id' });
             }
 
             console.log('数据库升级成功，版本号:', DB_VERSION);
@@ -605,3 +610,39 @@ async function resetAllData() {
         dbDeleteRequest.onerror = () => reject(dbDeleteRequest.error);
     });
 }
+
+// 添加置顶相关的数据库操作函数
+const getPinnedUsers = async () => {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(['pinnedUsers'], 'readonly');
+        const store = transaction.objectStore('pinnedUsers');
+        const request = store.get('pinnedList');
+        
+        request.onsuccess = () => {
+            resolve(request.result?.users || []);
+        };
+        request.onerror = () => reject(request.error);
+    });
+};
+
+const updatePinnedUsers = async (userId, shouldPin) => {
+    return new Promise(async (resolve, reject) => {
+        const transaction = db.transaction(['pinnedUsers'], 'readwrite');
+        const store = transaction.objectStore('pinnedUsers');
+        
+        const request = store.get('pinnedList');
+        request.onsuccess = () => {
+            let pinnedList = request.result?.users || [];
+            
+            if (shouldPin && !pinnedList.includes(userId)) {
+                pinnedList.push(userId);
+            } else if (!shouldPin) {
+                pinnedList = pinnedList.filter(id => id !== userId);
+            }
+            
+            store.put({ id: 'pinnedList', users: pinnedList });
+            resolve();
+        };
+        request.onerror = () => reject(request.error);
+    });
+};
