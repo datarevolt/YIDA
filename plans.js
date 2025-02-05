@@ -79,18 +79,32 @@ const PlansManager = {
         // 显示通知
         show: (plan, type = 'expired') => {
             if (Notification.permission === "granted") {
-                const title = type === 'expired' ? 
-                    "你有未确认的计划" : 
-                    "你有即将到期的计划";
-                
-                const content = `用户：${plan.userId}\n计划内容：${plan.content}`;
+                try {
+                    const title = type === 'expired' ? 
+                        "你有未确认的计划" : 
+                        "你有即将到期的计划";
+                    
+                    const content = `用户：${plan.userId}\n计划内容：${plan.content}`;
 
-                new Notification(title, {
-                    body: content,
-                    icon: "favicon.ico",
-                    requireInteraction: false,
-                    silent: false
-                });
+                    // 确保关闭之前的通知
+                    if (PlansManager.notification.currentNotification) {
+                        PlansManager.notification.currentNotification.close();
+                    }
+
+                    // 创建新通知
+                    const notification = new Notification(title, {
+                        body: content,
+                        icon: "favicon.ico",
+                        requireInteraction: false,
+                        silent: false,
+                        tag: `plan_${plan.id}` // 添加标签以识别通知
+                    });
+
+                    // 存储当前通知
+                    PlansManager.notification.currentNotification = notification;
+                } catch (error) {
+                    console.warn('显示通知失败:', error);
+                }
             }
         },
 
@@ -99,15 +113,19 @@ const PlansManager = {
             // 如果已经有定时器在运行，先清除
             PlansManager.notification.clearNotificationTimer(plan.id);
 
+            // 立即发送一次通知
+            PlansManager.notification.show(plan, 'expired');
+
             // 创建新的定时器，每2分钟通知一次
             const timerId = setInterval(() => {
                 // 检查是否已确认
                 if (localStorage.getItem(`plan_expired_${plan.id}`)) {
                     PlansManager.notification.clearNotificationTimer(plan.id);
                 } else {
+                    // 重新创建通知对象
                     PlansManager.notification.show(plan, 'expired');
                 }
-            }, 120000); // 2分钟 = 120000毫秒
+            }, 120000);
 
             // 存储定时器ID
             PlansManager.notification.notificationTimers.set(plan.id, timerId);
@@ -127,7 +145,10 @@ const PlansManager = {
                 clearInterval(timerId);
             });
             PlansManager.notification.notificationTimers.clear();
-        }
+        },
+
+        // 添加当前通知的引用
+        currentNotification: null
     },
 
     // 时间处理
@@ -325,12 +346,19 @@ const PlansManager = {
                 });
             }
 
-            // 初始加载数据
+            // 立即加载数据
             await PlansManager.loadPlans();
-            
-            // 异步请求通知权限，不阻塞数据加载
+
+            // 设置定时器，每分钟更新一次
+            PlansManager.updateTimer = setInterval(async () => {
+                await PlansManager.checkTodoStatus();
+            }, 60000);
+
+            // 异步请求通知权限，不阻塞其他操作
             if (Notification.permission === "default") {
-                PlansManager.notification.request().catch(console.warn);
+                setTimeout(() => {
+                    PlansManager.notification.request().catch(console.warn);
+                }, 1000);
             }
 
             // 页面关闭时清除所有定时器
@@ -340,11 +368,6 @@ const PlansManager = {
                     clearInterval(PlansManager.updateTimer);
                 }
             });
-
-            // 设置定时器，每分钟更新一次
-            PlansManager.updateTimer = setInterval(async () => {
-                await PlansManager.checkTodoStatus();
-            }, 60000);
 
             // 统一处理模态框事件
             $(document).on('show.bs.modal', '#addPlanModal', () => {
@@ -416,18 +439,11 @@ const PlansManager = {
                 }
             });
 
-            // 添加确认按钮事件处理
-            $(document).on('click', '.confirm-plan', async function(e) {
+            // 添加确认按钮事件处理（直接确认，不显示提示）
+            $(document).on('click', '.confirm-plan', async function() {
                 const planId = parseInt($(this).data('id'));
-                if (confirm('确认将此计划标记为已取消？')) {
-                    await PlansManager.confirmExpired(planId);
-                }
+                await PlansManager.confirmExpired(planId);
             });
-
-            // 如果在计划管理页面，加载计划列表
-            if (document.getElementById('planTableBody')) {
-                await PlansManager.loadPlans();
-            }
 
         } catch (error) {
             console.error('初始化计划管理失败：', error);
@@ -489,9 +505,11 @@ const PlansManager = {
     // 确认过期方法
     confirmExpired: async (planId) => {
         try {
+            // 直接确认，不显示提示框
             localStorage.setItem(`plan_expired_${planId}`, 'true');
             // 清除该计划的通知定时器
             PlansManager.notification.clearNotificationTimer(planId);
+            // 刷新数据
             await PlansManager.loadPlans();
             await PlansManager.checkTodoStatus();
         } catch (error) {
