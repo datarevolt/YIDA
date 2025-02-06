@@ -393,7 +393,8 @@
                                             `<img src="${user.avatar}" class="avatar-img" alt="用户头像">` :
                                             `<div class="avatar-placeholder"><i class="fas fa-user"></i></div>`
                                         }
-                                        <button class="btn btn-sm btn-light paste-avatar-btn">
+                                        <button type="button" class="btn btn-outline-secondary paste-avatar-btn" 
+                                                data-toggle="tooltip" data-placement="top" title="从剪贴板粘贴头像">
                                             <i class="fas fa-paste"></i>
                                         </button>
                                     </div>
@@ -841,6 +842,46 @@
             closeUserRecords();
         }
     });
+
+    // 在文档加载完成后初始化所有的 tooltip
+    $(document).ready(function(){
+        $('[data-toggle="tooltip"]').tooltip({
+            trigger: 'hover',  // 鼠标悬停时立即显示
+            delay: { show: 0, hide: 100 }  // 立即显示，隐藏时有短暂延迟
+        });
+    });
+
+    function pasteImage() {
+        navigator.clipboard.read().then(items => {
+            // 检查是否有内容
+            if (items.length === 0) {
+                alert('剪贴板为空');
+                return;
+            }
+
+            // 查找图片类型的内容
+            const imageItem = items.find(item => 
+                item.types. ome(type => type.startsWith('image/'))
+            );
+
+            if (!imageItem) {
+                alert('剪贴板中没有图片');
+                return;
+            }
+
+            // 处理图片
+            imageItem.getType('image/png').then(blob => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('userAvatar').src = e.target.result;
+                };
+                reader.readAsDataURL(blob);
+            });
+        }).catch(err => {
+            console.error('读取剪贴板失败:', err);
+            alert('读取剪贴板失败，请确保已授予剪贴板访问权限');
+        });
+    }
     </script>
 </body>
 </html>
