@@ -328,9 +328,6 @@
 <!-- 添加遮罩层 -->
 <div class="modal-backdrop"></div>
 
-<!-- 添加在页面某处用于测试 -->
-<button onclick="testNotice()" style="position: fixed; bottom: 20px; left: 20px;">测试通知</button>
-
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
     try {
@@ -562,11 +559,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         alert('系统初始化失败');
     }
 });
-
-function testNotice() {
-    const notice = document.getElementById('floatingNotice');
-    notice.classList.add('show');
-}
 
 // 修改充值和出款按钮的处理逻辑
 const updateUserNoteWithTransaction = async (userId, amount, type, manualNote) => {

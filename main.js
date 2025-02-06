@@ -1,7 +1,7 @@
 // 数据库初始化
 let db;
-const DB_NAME = 'FinanceDB';  // 已经是正确的名称
-const DB_VERSION = 3;  // 保持版本号不变
+const DB_NAME = 'FinanceDB';
+const DB_VERSION = 4;  // 改回版本号 4
 
 // 获取系统时区，但默认使用 'local'
 const systemTZ = 'local';  // 改为直接使用 'local'
@@ -10,7 +10,7 @@ let currentTimeZone = localStorage.getItem('timeZone') || systemTZ;
 const initDB = () => {
     return new Promise((resolve, reject) => {
         console.log('Initializing database...');
-        const request = indexedDB.open(DB_NAME, DB_VERSION);  // 使用原来的数据库名称
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
         
         request.onerror = (event) => {
             console.error('数据库打开失败：', event.target.error);
@@ -53,7 +53,7 @@ const initDB = () => {
                 planStore.createIndex('status', 'status', { unique: false });
             }
 
-            // 添加 pinnedUsers store (新增)
+            // 添加 pinnedUsers store
             if (!upgradeDB.objectStoreNames.contains('pinnedUsers')) {
                 upgradeDB.createObjectStore('pinnedUsers', { keyPath: 'id' });
             }
@@ -649,7 +649,7 @@ async function resetEverything() {
 
         // 3. 删除 IndexedDB 数据库
         await new Promise((resolve, reject) => {
-            const deleteRequest = indexedDB.deleteDatabase(DB_NAME);  // 使用相同的数据库名称
+            const deleteRequest = indexedDB.deleteDatabase(DB_NAME);  // 使用正确的数据库名称
             deleteRequest.onsuccess = () => resolve();
             deleteRequest.onerror = () => reject(deleteRequest.error);
         });
@@ -842,3 +842,15 @@ const loadUsers = async () => {
         alert('加载用户列表失败：' + error.message);
     }
 };
+
+async function resetAllData() {
+    // 清空 localStorage
+    localStorage.clear();
+
+    // 删除数据库
+    return new Promise((resolve, reject) => {
+        const dbDeleteRequest = indexedDB.deleteDatabase('FinanceDB');  // 使用正确的数据库名称
+        dbDeleteRequest.onsuccess = () => resolve();
+        dbDeleteRequest.onerror = () => reject(dbDeleteRequest.error);
+    });
+}

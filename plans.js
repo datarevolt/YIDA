@@ -355,20 +355,16 @@ const PlansManager = {
     // 初始化
     init: async () => {
         try {
-            // 确保数据库初始化
+            // 等待主数据库初始化完成
             if (!db) {
-                await new Promise((resolve) => {
-                    const request = indexedDB.open('FinanceDB', 3);  // 改为 FinanceDB 并使用正确的版本号
-                    request.onupgradeneeded = (event) => {
-                        const db = event.target.result;
-                        if (!db.objectStoreNames.contains('plans')) {
-                            db.createObjectStore('plans', { keyPath: 'id' });
+                await new Promise(resolve => {
+                    const checkDb = setInterval(() => {
+                        if (window.db) {
+                            clearInterval(checkDb);
+                            db = window.db;
+                            resolve();
                         }
-                    };
-                    request.onsuccess = () => {
-                        window.db = request.result;
-                        resolve();
-                    };
+                    }, 100);
                 });
             }
 
