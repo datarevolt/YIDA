@@ -358,7 +358,7 @@ const PlansManager = {
             // 确保数据库初始化
             if (!db) {
                 await new Promise((resolve) => {
-                    const request = indexedDB.open('financeDB', 1);
+                    const request = indexedDB.open('FinanceDB', 3);  // 改为 FinanceDB 并使用正确的版本号
                     request.onupgradeneeded = (event) => {
                         const db = event.target.result;
                         if (!db.objectStoreNames.contains('plans')) {

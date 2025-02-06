@@ -1,7 +1,7 @@
 // 数据库初始化
 let db;
-const DB_NAME = 'FinanceDB';
-const DB_VERSION = 3;  // 修改为当前版本号
+const DB_NAME = 'FinanceDB';  // 已经是正确的名称
+const DB_VERSION = 3;  // 保持版本号不变
 
 // 获取系统时区，但默认使用 'local'
 const systemTZ = 'local';  // 改为直接使用 'local'
@@ -10,7 +10,7 @@ let currentTimeZone = localStorage.getItem('timeZone') || systemTZ;
 const initDB = () => {
     return new Promise((resolve, reject) => {
         console.log('Initializing database...');
-        const request = indexedDB.open('FinancialDashboard', DB_VERSION);
+        const request = indexedDB.open(DB_NAME, DB_VERSION);  // 使用原来的数据库名称
         
         request.onerror = (event) => {
             console.error('数据库打开失败：', event.target.error);
@@ -649,7 +649,7 @@ async function resetEverything() {
 
         // 3. 删除 IndexedDB 数据库
         await new Promise((resolve, reject) => {
-            const deleteRequest = indexedDB.deleteDatabase('FinancialDashboard');
+            const deleteRequest = indexedDB.deleteDatabase(DB_NAME);  // 使用相同的数据库名称
             deleteRequest.onsuccess = () => resolve();
             deleteRequest.onerror = () => reject(deleteRequest.error);
         });

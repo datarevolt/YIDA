@@ -555,37 +555,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             noteGroup.style.display = showNoteInput ? 'block' : 'none';
         }
 
-        // 处理悬浮通知窗口
-        const noticeVersion = '1.0'; // 更新内容时修改这个版本号
-        const lastNoticeVersion = localStorage.getItem('lastNoticeVersion');
-        
-        // 添加调试日志
-        console.log('当前版本:', noticeVersion);
-        console.log('上次版本:', lastNoticeVersion);
-
-        if (lastNoticeVersion !== noticeVersion) {
-            console.log('版本不同，显示通知');
-            // 显示通知
-            setTimeout(() => {
-                const notice = document.getElementById('floatingNotice');
-                notice.classList.add('show');
-                console.log('通知已显示');
-            }, 1000);
-
-            // 保存新版本号
-            localStorage.setItem('lastNoticeVersion', noticeVersion);
-            console.log('已保存新版本号');
-        } else {
-            console.log('版本相同，不显示通知');
-        }
-
-        // 关闭按钮事件
-        document.getElementById('closeNotice').addEventListener('click', () => {
-            document.getElementById('floatingNotice').classList.remove('show');
-        });
-
-        // 在浏览器控制台中运行这行代码来清除版本记录
-        localStorage.removeItem('lastNoticeVersion');
+        // 检查版本并显示通知
+        await checkVersionAndShowNotice();
     } catch (error) {
         console.error('Initialization error:', error);
         alert('系统初始化失败');
@@ -633,6 +604,73 @@ const updateUserNoteWithTransaction = async (userId, amount, type, manualNote) =
         console.error('更新备注失败：', error);
     }
 };
+
+// 检查版本并显示通知
+async function checkVersionAndShowNotice() {
+    const currentVersion = '5.0';
+    const lastVersion = localStorage.getItem('lastVersion');
+    
+    console.log('当前版本:', currentVersion);
+    console.log('上次版本:', lastVersion);
+
+    // 只有当版本不同且未显示过通知时才显示
+    if (currentVersion !== lastVersion) {
+        console.log('版本不同，显示通知');
+        
+        // 显示通知
+        const notice = document.createElement('div');
+        notice.className = 'floating-notice';
+        notice.innerHTML = `
+            <div class="floating-notice-content">
+                <div class="floating-notice-header">
+                    <h5>系统更新提示</h5>
+                    <button type="button" class="close" onclick="closeNotice(this)">&times;</button>
+                </div>
+                <div class="floating-notice-body">
+                    <p>系统已更新到最新版本 ${currentVersion}，更新内容：</p>
+                    <ul>
+                        <li>优化了数据录入功能</li>
+                        <li>改进了用户界面体验</li>
+                        <li>新增了数据导出功能</li>
+                        <li>修复了已知问题</li>
+                    </ul>
+                </div>
+            </div>
+        `;
+        
+        // 添加遮罩层
+        const backdrop = document.createElement('div');
+        backdrop.className = 'modal-backdrop';
+        
+        document.body.appendChild(notice);
+        document.body.appendChild(backdrop);
+        
+        // 使用 setTimeout 确保过渡效果正常显示
+        setTimeout(() => {
+            notice.classList.add('show');
+        }, 10);
+        
+        // 保存新版本号到 localStorage
+        localStorage.setItem('lastVersion', currentVersion);
+        console.log('已保存新版本号');
+        
+        // 标记通知已显示
+        localStorage.setItem('noticeShown', 'true');
+        console.log('通知已显示');
+    }
+}
+
+// 关闭通知的函数
+function closeNotice(button) {
+    const notice = button.closest('.floating-notice');
+    const backdrop = document.querySelector('.modal-backdrop');
+    
+    notice.classList.remove('show');
+    setTimeout(() => {
+        notice.remove();
+        backdrop.remove();
+    }, 300);
+}
 </script>
 </body>
 </html>
