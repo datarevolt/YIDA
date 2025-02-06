@@ -1,18 +1,21 @@
 /* 通用样式 */
 .content-wrapper {
+    position: relative;
     padding: 20px;
+    min-height: 100vh;
 }
 
 /* 表格样式 */
 .table th {
     background-color: #f4f6f9;
     border: 1px solid #dee2e6;
-    text-align: center;
-    vertical-align: middle;
-    padding: 12px 8px;
+    text-align: center !important;
+    vertical-align: middle !important;
+    padding: 12px 8px !important;
     font-weight: 500;
     height: 50px;
-    writing-mode: horizontal-tb !important;  /* 强制横排 */
+    white-space: nowrap;         /* 防止文字换行 */
+    writing-mode: horizontal-tb;  /* 强制横向文字 */
 }
 
 .table td {
@@ -23,8 +26,14 @@
 
 /* 输入框样式 */
 .note-input {
-    min-width: 200px;
-    resize: vertical;
+    min-height: 60px;
+    min-width: 150px;
+    width: 100%;
+    resize: none;  /* 移除手动调整大小的功能 */
+    overflow: hidden;  /* 隐藏滚动条 */
+    transition: height 0.2s;  /* 平滑过渡效果 */
+    line-height: 1.5;  /* 设置行高 */
+    padding: 8px;  /* 添加内边距 */
 }
 
 /* 按钮样式 */
@@ -292,11 +301,27 @@ input[type="date"] {
     table-layout: fixed;
 }
 
+/* 修改单元格基础样式，确保所有列居中 */
 .table th,
 .table td {
-    border: 1px solid #dee2e6;
     padding: 8px;
+    vertical-align: middle;
+    border: 1px solid #dee2e6;
+    text-align: center !important;  /* 强制所有单元格居中 */
+}
+
+/* 只有备注列左对齐 */
+.table td.note-cell {
+    text-align: left !important;
+    white-space: normal;
     overflow: visible;
+    padding: 8px;
+}
+
+/* 确保时间列居中 */
+.table .time-column,
+.table td[data-register-time] {
+    text-align: center !important;
 }
 
 /* 数字列对齐 */
@@ -319,11 +344,18 @@ input[type="date"] {
     margin: -8px 0;
 }
 
-/* 操作列统一样式 */
-.operation-column {
-    width: 50px !important;
-    padding: 4px !important;
-    text-align: center;
+/* 操作列按钮样式 */
+.table td.action-column {
+    white-space: normal !important;  /* 覆盖之前的 nowrap */
+    overflow: visible !important;    /* 覆盖之前的 hidden */
+    text-overflow: clip !important;  /* 覆盖之前的 ellipsis */
+}
+
+/* 删除按钮样式 */
+.delete-user-btn {
+    white-space: nowrap;
+    width: auto !important;
+    min-width: 50px !important;
 }
 
 /* 备注单元格样式 */
@@ -571,60 +603,410 @@ select.form-control {
     }
 }
 
-/* 置顶按钮容器样式 */
-.pin-column {
+/* 表格基础样式 */
+.table {
+    width: 100%;
+    margin-bottom: 1rem;
+    table-layout: fixed;
+}
+
+/* 表格列宽控制 */
+.table {
+    table-layout: fixed;  /* 使用固定布局 */
+    width: 100%;
+}
+
+/* 固定列宽设置 */
+.table colgroup col.pin-column { 
+    width: 50px !important; 
+    min-width: 50px !important;
+    max-width: 50px !important;
+}
+
+.table colgroup col.avatar-column { 
+    width: 80px !important;
+    min-width: 80px !important;
+    max-width: 80px !important;
+}
+
+.table colgroup col.user-column { 
+    width: 120px !important;
+    min-width: 120px !important;
+    max-width: 120px !important;
+}
+
+.table colgroup col.time-column { 
+    width: 150px !important;
+    min-width: 150px !important;
+    max-width: 150px !important;
+}
+
+.table colgroup col.deposit-column,
+.table colgroup col.withdraw-column,
+.table colgroup col.profit-column { 
+    width: 100px !important;
+    min-width: 100px !important;
+    max-width: 100px !important;
+}
+
+.table colgroup col.action-column { 
     width: 60px !important;
     min-width: 60px !important;
     max-width: 60px !important;
+}
+
+/* 备注列自适应剩余宽度 */
+.table colgroup col.note-column { 
+    width: auto;  /* 自动占用剩余空间 */
+}
+
+/* 确保单元格内容不会溢出 */
+.table td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 备注列允许文本换行 */
+.table td.note-cell {
+    white-space: normal;
+    overflow: visible;
+}
+
+/* 置顶列和按钮样式 */
+.pin-column {
+    width: 50px !important;
+    padding: 4px !important;
     text-align: center !important;
     vertical-align: middle !important;
-    writing-mode: horizontal-tb !important;
-    text-orientation: mixed !important;
-    direction: ltr !important;
-    white-space: nowrap !important;
+}
+
+/* 按钮容器 */
+.btn-container {
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
+    height: 100% !important;
+}
+
+/* 置顶按钮本身 */
+.pin-user-btn {
+    padding: 4px !important;
+    width: 28px !important;
+    height: 28px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    margin: 0 !important;
+}
+
+/* 按钮中的图标 */
+.pin-user-btn i {
+    font-size: 12px !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+}
+
+/* 头像列样式 */
+.avatar-column {
+    width: 75px !important;
     padding: 0 !important;
 }
 
-/* 置顶按钮样式 */
-.pin-user-btn {
-    padding: 4px !important;
-    width: 32px !important;
-    height: 32px !important;
+.avatar-cell {
+    padding: 0 !important;
+    position: relative;
+    text-align: center !important;
+}
+
+.avatar-wrapper {
+    width: 60px !important;
+    height: 60px !important;
+    position: relative;
     margin: 0 auto !important;
+}
+
+.avatar-img, 
+.avatar-placeholder {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover;
+    border: 1px solid #dee2e6;
+    margin: 0 !important;
+}
+
+.avatar-placeholder {
+    background-color: #f8f9fa;
+    border: 1px dashed #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #adb5bd;
+}
+
+/* 粘贴按钮样式 */
+.paste-avatar-btn {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 24px !important;
+    height: 24px !important;
+    padding: 0 !important;
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
+    font-size: 12px !important;
+    opacity: 0;
+    transition: opacity 0.2s;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    border: 1px solid #dee2e6;
+    z-index: 1;
 }
 
-/* 置顶按钮图标样式 */
-.pin-user-btn i {
-    font-size: 14px !important;
-    line-height: 1 !important;
-    display: block !important;
+.avatar-cell:hover .paste-avatar-btn {
+    opacity: 1;
 }
 
-/* 确保按钮所在的单元格居中 */
-.table td.pin-column {
-    padding: 8px !important;
-    text-align: center !important;
-    vertical-align: middle !important;
-    display: table-cell !important;
+/* 头像悬停效果 */
+.avatar-wrapper:hover .avatar-img,
+.avatar-wrapper:hover .avatar-placeholder {
+    opacity: 0.7;
+    transition: opacity 0.2s;
 }
 
-/* 表格表头统一样式 */
+/* 头像列隐藏时的样式 */
+.table.no-avatar .avatar-column,
+.table.no-avatar th.avatar-column,
+.table.no-avatar td.avatar-cell {
+    display: none !important;
+}
+
+/* 头像列隐藏时，备注列宽度增加 */
+.table.no-avatar colgroup col.note-column {
+    width: 475px !important;
+}
+
+/* 数据录入表单布局 */
+.data-entry-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+/* 固定宽度的列 */
+.data-entry-form .col-md-2 {
+    width: 16.666%;
+    flex: 0 0 auto;
+    padding: 0 15px;
+}
+
+/* 备注输入框容器样式 */
+.note-group {
+    width: 25%;
+    flex: 0 0 auto;
+    padding: 0 15px;
+}
+
+/* 按钮组容器样式 */
+.button-group-container {
+    width: 25%;
+    flex: 0 0 auto;
+    padding: 0 15px;
+}
+
+/* 备注输入框隐藏时的按钮组样式 - 仅针对数据录入表单 */
+#orderForm .note-group[style*="display: none"] + .button-group-container,
+#quickOrderForm .note-group[style*="display: none"] + .button-group-container {
+    margin-left: -1%;
+}
+
+/* 首页特定样式 */
+#orderForm .button-group-container .btn {
+    min-width: 80px;
+}
+
+/* 用户管理页面特定样式 */
+#quickOrderForm .button-group-container .btn {
+    min-width: 80px;
+}
+
+/* 置顶按钮样式 */
+.back-to-top {
+    position: fixed;
+    bottom: 20px;          /* 距离底部的距离 */
+    right: 20px;           /* 距离右侧的距离 */
+    z-index: 1000;
+    display: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    text-align: center;
+    line-height: 40px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* 考虑到侧边栏的宽度，调整右侧边距 */
+@media (min-width: 768px) {
+    body:not(.sidebar-collapse) .back-to-top {
+        right: calc(20px + 250px);  /* 可以调整这个值 */
+    }
+}
+
+/* 当侧边栏折叠时的样式 */
+body.sidebar-collapse .back-to-top {
+    right: 20px;
+}
+
+/* 悬停效果 */
+.back-to-top:hover {
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+}
+
+/* 表头样式统一 */
 .table th {
     background-color: #f4f6f9;
     border: 1px solid #dee2e6;
-    text-align: center;
-    vertical-align: middle;
-    padding: 12px 8px;
+    text-align: center !important;
+    vertical-align: middle !important;
+    padding: 12px 8px !important;
     font-weight: 500;
     height: 50px;
+    white-space: nowrap;         /* 防止文字换行 */
+    writing-mode: horizontal-tb;  /* 强制横向文字 */
+}
+
+/* 置顶列和头像列的表头样式 */
+.table th.pin-column,
+.table th.avatar-column {
+    padding: 12px 8px !important;  /* 统一内边距 */
+    line-height: 1.2;              /* 调整行高 */
+    height: 50px;                  /* 统一高度 */
+}
+
+/* 操作列表头样式 */
+.table th.action-column {
+    writing-mode: horizontal-tb !important;  /* 强制横向文字 */
+    white-space: nowrap;                    /* 防止文字换行 */
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
+/* 删除之前可能存在的冲突样式 */
+.table th[style*="writing-mode"] {
     writing-mode: horizontal-tb !important;
-    text-orientation: mixed !important;
-    direction: ltr !important;
-    white-space: nowrap !important;
+}
+
+/* 遮罩层样式 */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9998; /* 比通知窗口低一级 */
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+/* 悬浮通知窗口样式 */
+.floating-notice {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 350px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.15);
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.floating-notice.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.floating-notice.show + .modal-backdrop {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* 其他样式保持不变 */
+.floating-notice-content {
+    position: relative;
+    background: white;
+    border-radius: 8px;
+    padding: 0;
+}
+
+.floating-notice-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f8f9fa;
+    border-radius: 8px 8px 0 0;
+}
+
+.floating-notice-header h5 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.floating-notice-header .close {
+    padding: 0;
+    margin: -10px -10px -10px auto;
+    font-size: 1.5rem;
+    cursor: pointer;
+    background: transparent;
+    border: 0;
+    opacity: .5;
+}
+
+.floating-notice-header .close:hover {
+    opacity: .75;
+}
+
+.floating-notice-body {
+    padding: 20px;
+}
+
+.floating-notice-body p {
+    margin-bottom: 10px;
+    color: #666;
+}
+
+.floating-notice-body ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.floating-notice-body li {
+    margin-bottom: 5px;
+    color: #666;
+}
+
+/* 烟花效果样式 */
+#fireworksCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 999999;
+    pointer-events: none;
+    background: transparent; /* 确保背景透明 */
 }

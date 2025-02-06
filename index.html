@@ -22,7 +22,11 @@
     <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
     <script src="main.js"></script>
     <script src="plans.js"></script>
+    <script src="fireworks.js"></script>
 </head>
+<!-- 烟花画布 -->
+<canvas id="fireworksCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 999999; pointer-events: none;"></canvas>
+
 <body class="hold-transition sidebar-mini">
 <div class="wrapper">
     <!-- 导航栏 -->
@@ -104,7 +108,7 @@
                         <div class="alert alert-warning mb-0 text-right" role="alert">
                             <i class="fas fa-bullhorn mr-2"></i>
                             <strong>公告：</strong>
-                            更新用户置顶功能，还有其他功能需求找
+                            有其他功能需求联系
                             <a href="https://t.me/YiDa_6" target="_blank" class="alert-link">益达</a>
                         </div>
                     </div>
@@ -128,27 +132,33 @@
                     </div>
                     <div class="card-body">
                         <form id="orderForm">
-                            <div class="row">
-                                <div class="col-md-3">
+                            <div class="row data-entry-form">
+                                <div class="col-md-2">
                                     <div class="form-group">
                                         <label>订单日期</label>
                                         <input type="date" id="orderDate" class="form-control" required>
                                     </div>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <div class="form-group">
                                         <label>用户名</label>
                                         <input type="text" id="userId" class="form-control" required>
                                     </div>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <div class="form-group">
                                         <label>金额</label>
                                         <input type="number" id="amount" class="form-control" step="0.01" required 
                                                placeholder="回车默认充值">
                                     </div>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-3 note-group">
+                                    <div class="form-group">
+                                        <label>备注</label>
+                                        <input type="text" id="orderNote" class="form-control" placeholder="可选">
+                                    </div>
+                                </div>
+                                <div class="col-md-3 button-group-container">
                                     <div class="form-group">
                                         <label>&nbsp;</label>
                                         <div>
@@ -264,7 +274,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">新增计划</h5>
+                <h5 class="modal-title">添加计划</h5>
                 <button type="button" class="close" data-dismiss="modal">
                     <span>&times;</span>
                 </button>
@@ -272,18 +282,16 @@
             <div class="modal-body">
                 <form id="planForm">
                     <div class="form-group">
-                        <label>用户名</label>
-                        <input type="text" id="planUserId" class="form-control" required 
-                               placeholder="请输入用户名">
+                        <label>用户ID</label>
+                        <input type="text" class="form-control" id="planUserId" required>
                     </div>
                     <div class="form-group">
                         <label>计划内容</label>
-                        <textarea id="planContent" class="form-control" rows="3" required 
-                                placeholder="请输入计划内容"></textarea>
+                        <textarea class="form-control" id="planContent" required></textarea>
                     </div>
                     <div class="form-group">
                         <label>计划时间</label>
-                        <input type="datetime-local" id="planTime" class="form-control" required>
+                        <input type="datetime-local" class="form-control" id="planTime" required>
                     </div>
                 </form>
             </div>
@@ -294,6 +302,34 @@
         </div>
     </div>
 </div>
+
+<!-- 悬浮通知窗口 -->
+<div id="floatingNotice" class="floating-notice">
+    <div class="floating-notice-content">
+        <div class="floating-notice-header">
+            <h5>系统更新通知</h5>
+            <button type="button" class="close" id="closeNotice">
+                <span>&times;</span>
+            </button>
+        </div>
+        <div class="floating-notice-body">
+            <p>🎉 新功能上线：</p>
+            <ul>
+                <li>添加客户头像功能</li>
+                <li>无置顶，置顶，优先置顶</li>
+                <li>备注自动记录充值/出款以及金额信息</li>
+                <li>添加备注快捷输入</li>
+                <li>用户管理页面添加数据录入</li>
+                <li>可在设置中自定义功能开关</li>
+            </ul>
+        </div>
+    </div>
+</div>
+<!-- 添加遮罩层 -->
+<div class="modal-backdrop"></div>
+
+<!-- 添加在页面某处用于测试 -->
+<button onclick="testNotice()" style="position: fixed; bottom: 20px; left: 20px;">测试通知</button>
 
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
@@ -420,20 +456,34 @@ document.addEventListener('DOMContentLoaded', async () => {
                     timeZone: TimeZoneManager.currentTimeZone
                 };
 
+                console.log('充值数据:', data);
+
                 if (!data.userId || !data.amount || isNaN(data.amount)) {
+                    console.log('数据验证失败');
                     return;
                 }
 
-                // 保存当前用户名到 localStorage
-                localStorage.setItem('lastUserId', data.userId);
+                // 先触发烟花效果，不等待数据库操作
+                if (data.amount >= 1000) {
+                    console.log('准备显示烟花效果');
+                    showFireworks(data.amount);
+                }
 
+                localStorage.setItem('lastUserId', data.userId);
                 await addOrder(data);
-                await loadData();
+
+                // 使用新的函数更新备注
+                const orderNote = document.getElementById('orderNote').value.trim();
+                await updateUserNoteWithTransaction(data.userId, data.amount, '充值', orderNote);
+
                 // 重置表单时保留用户名
                 const currentUserId = data.userId;
                 document.getElementById('orderForm').reset();
                 document.getElementById('orderDate').value = TimeZoneManager.formatDate(new Date());
                 document.getElementById('userId').value = currentUserId;
+
+                // 重新加载数据
+                await loadData();
             } catch (error) {
                 console.error('添加失败：', error);
                 alert('添加失败：' + error.message);
@@ -457,28 +507,36 @@ document.addEventListener('DOMContentLoaded', async () => {
                     return;
                 }
 
-                // 保存当前用户名到 localStorage
                 localStorage.setItem('lastUserId', data.userId);
-
                 await addOrder(data);
-                await loadData();
+
+                // 使用新的函数更新备注
+                const orderNote = document.getElementById('orderNote').value.trim();
+                await updateUserNoteWithTransaction(data.userId, data.amount, '出款', orderNote);
+
                 // 重置表单时保留用户名
                 const currentUserId = data.userId;
                 document.getElementById('orderForm').reset();
                 document.getElementById('orderDate').value = TimeZoneManager.formatDate(new Date());
                 document.getElementById('userId').value = currentUserId;
+
+                // 重新加载数据
+                await loadData();
             } catch (error) {
                 console.error('添加失败：', error);
                 alert('添加失败：' + error.message);
             }
         });
 
-        // 添加表单回车提交事件
-        document.getElementById('orderForm').addEventListener('keypress', async (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault(); // 阻止默认表单提交
-                document.getElementById('depositBtn').click(); // 触发充值按钮点击
-            }
+        // 为数据录入表单的所有输入框添加回车事件
+        const orderInputs = ['orderDate', 'userId', 'amount', 'orderNote'];
+        orderInputs.forEach(id => {
+            document.getElementById(id).addEventListener('keypress', async (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    document.getElementById('depositBtn').click();
+                }
+            });
         });
 
         // 初始化代办计划状态
@@ -487,11 +545,94 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 初始加载数据
         await loadData();
         console.log('Initial data loaded');
+
+        // 检查备注输入框设置
+        const showNoteInput = localStorage.getItem('showNoteInput') !== 'false';
+        const noteGroup = document.querySelector('#orderForm .note-group');
+        const form = document.querySelector('.data-entry-form');
+
+        if (noteGroup && form) {
+            noteGroup.style.display = showNoteInput ? 'block' : 'none';
+        }
+
+        // 处理悬浮通知窗口
+        const noticeVersion = '1.0'; // 更新内容时修改这个版本号
+        const lastNoticeVersion = localStorage.getItem('lastNoticeVersion');
+        
+        // 添加调试日志
+        console.log('当前版本:', noticeVersion);
+        console.log('上次版本:', lastNoticeVersion);
+
+        if (lastNoticeVersion !== noticeVersion) {
+            console.log('版本不同，显示通知');
+            // 显示通知
+            setTimeout(() => {
+                const notice = document.getElementById('floatingNotice');
+                notice.classList.add('show');
+                console.log('通知已显示');
+            }, 1000);
+
+            // 保存新版本号
+            localStorage.setItem('lastNoticeVersion', noticeVersion);
+            console.log('已保存新版本号');
+        } else {
+            console.log('版本相同，不显示通知');
+        }
+
+        // 关闭按钮事件
+        document.getElementById('closeNotice').addEventListener('click', () => {
+            document.getElementById('floatingNotice').classList.remove('show');
+        });
+
+        // 在浏览器控制台中运行这行代码来清除版本记录
+        localStorage.removeItem('lastNoticeVersion');
     } catch (error) {
         console.error('Initialization error:', error);
         alert('系统初始化失败');
     }
 });
+
+function testNotice() {
+    const notice = document.getElementById('floatingNotice');
+    notice.classList.add('show');
+}
+
+// 修改充值和出款按钮的处理逻辑
+const updateUserNoteWithTransaction = async (userId, amount, type, manualNote) => {
+    // 检查是否启用了自动备注
+    const autoNoteEnabled = localStorage.getItem('autoNote') !== 'false';
+    if (!autoNoteEnabled) {
+        // 如果关闭了自动备注，但有手动备注，仍然需要保存手动备注
+        if (manualNote) {
+            try {
+                const user = await getUser(userId);
+                const currentDate = new Date().toLocaleDateString();
+                const newNote = `${currentDate}: ${manualNote}\n${user?.note || ''}`;
+                await updateUserNote(userId, newNote);
+            } catch (error) {
+                console.error('更新备注失败：', error);
+            }
+        }
+        return;
+    }
+
+    try {
+        const user = await getUser(userId);
+        const currentDate = new Date().toLocaleDateString();
+        const autoNote = `${currentDate}: ${amount} ${type}`;
+        
+        let newNote = '';
+        if (manualNote) {
+            newNote = `${autoNote} (${manualNote})\n${user?.note || ''}`;
+        } else {
+            newNote = `${autoNote}\n${user?.note || ''}`;
+        }
+        
+        await updateUserNote(userId, newNote);
+    } catch (error) {
+        console.error('更新备注失败：', error);
+    }
+};
 </script>
 </body>
 </html>

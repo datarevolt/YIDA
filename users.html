@@ -17,403 +17,716 @@
     <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
     <script src="main.js"></script>
     <script src="plans.js"></script>
+    <script src="fireworks.js"></script>
 </head>
 <body class="hold-transition sidebar-mini">
-<div class="wrapper">
-    <!-- 导航栏 -->
-    <nav class="main-header navbar navbar-expand navbar-white navbar-light">
-        <ul class="navbar-nav">
-            <li class="nav-item">
-                <a class="nav-link" href="#" data-widget="pushmenu"><i class="fas fa-bars"></i></a>
-            </li>
-        </ul>
-        <ul class="navbar-nav ml-auto">
-            <li class="nav-item mr-3">
-                <span class="nav-link" id="currentTime"></span>
-            </li>
-            <li class="nav-item dropdown mr-3">
-                <a class="nav-link" data-toggle="dropdown" href="#" id="planNotification">
-                    <i class="fas fa-bell"></i>
-                    <span class="badge badge-warning navbar-badge" id="planCount">0</span>
-                </a>
-                <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
-                    <span class="dropdown-header">计划提醒</span>
-                    <div class="dropdown-divider"></div>
-                    <div id="planList" style="max-height: 300px; overflow-y: auto;"></div>
-                    <div class="dropdown-divider"></div>
-                    <a href="plans.html" class="dropdown-item dropdown-footer">查看所有计划</a>
+    <!-- 烟花画布 -->
+    <canvas id="fireworksCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 999999; pointer-events: none;"></canvas>
+    <div class="wrapper">
+        <!-- 导航栏 -->
+        <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-widget="pushmenu"><i class="fas fa-bars"></i></a>
+                </li>
+            </ul>
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item mr-3">
+                    <span class="nav-link" id="currentTime"></span>
+                </li>
+                <li class="nav-item dropdown mr-3">
+                    <a class="nav-link" data-toggle="dropdown" href="#" id="planNotification">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge badge-warning navbar-badge" id="planCount">0</span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                        <span class="dropdown-header">计划提醒</span>
+                        <div class="dropdown-divider"></div>
+                        <div id="planList" style="max-height: 300px; overflow-y: auto;"></div>
+                        <div class="dropdown-divider"></div>
+                        <a href="plans.html" class="dropdown-item dropdown-footer">查看所有计划</a>
+                    </div>
+                </li>
+                <li class="nav-item mr-3">
+                    <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addPlanModal">
+                        <i class="fas fa-plus"></i> 添加计划
+                    </button>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- 侧边栏 -->
+        <aside class="main-sidebar sidebar-dark-primary elevation-4">
+            <div class="sidebar">
+                <nav class="mt-2">
+                    <ul class="nav nav-pills nav-sidebar flex-column">
+                        <li class="nav-item">
+                            <a href="index.html" class="nav-link">
+                                <i class="nav-icon fas fa-home"></i> 首页
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="users.html" class="nav-link active">
+                                <i class="nav-icon fas fa-users"></i> 用户管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="orders.html" class="nav-link">
+                                <i class="nav-icon fas fa-list"></i> 订单记录
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="plans.html" class="nav-link">
+                                <i class="nav-icon fas fa-calendar"></i> 计划管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="settings.html" class="nav-link">
+                                <i class="nav-icon fas fa-cog"></i> 设置
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- 内容区 -->
+        <div class="content-wrapper">
+            <section class="content-header">
+                <div class="container-fluid">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h1>用户管理</h1>
+                        <button id="exportUsers" class="btn btn-success">
+                            <i class="fas fa-file-excel"></i> 导出用户数据
+                        </button>
+                    </div>
+                    
+                    <!-- 添加数据录入卡片 -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h3 class="card-title">快速录入</h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="quickOrderForm">
+                                <div class="row data-entry-form">
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label>订单日期</label>
+                                            <input type="date" id="quickOrderDate" class="form-control" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label>用户名</label>
+                                            <input type="text" id="quickUserId" class="form-control" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label>金额</label>
+                                            <input type="number" id="quickAmount" class="form-control" step="0.01" required 
+                                                   placeholder="回车默认充值">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 note-group">
+                                        <div class="form-group">
+                                            <label>备注</label>
+                                            <input type="text" id="quickOrderNote" class="form-control" placeholder="可选">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 button-group-container">
+                                        <div class="form-group">
+                                            <label>&nbsp;</label>
+                                            <div>
+                                                <button type="button" id="quickDepositBtn" class="btn btn-primary">充值</button>
+                                                <button type="button" id="quickWithdrawalBtn" class="btn btn-danger">出款</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="row mb-2">
+                        <div class="col-sm-6">
+                            <div class="input-group">
+                                <input type="text" id="searchUser" class="form-control" placeholder="搜索用户名...">
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="float-right">
+                                <select id="sortField" class="form-control">
+                                    <option value="registerTime">注册时间</option>
+                                    <option value="totalDeposit">累计充值</option>
+                                    <option value="totalWithdrawal">累计出款</option>
+                                    <option value="netAmount">纯利</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </li>
-            <li class="nav-item mr-3">
-                <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addPlanModal">
-                    <i class="fas fa-plus"></i> 添加计划
-                </button>
-            </li>
-        </ul>
-    </nav>
+            </section>
 
-    <!-- 侧边栏 -->
-    <aside class="main-sidebar sidebar-dark-primary elevation-4">
-        <div class="sidebar">
-            <nav class="mt-2">
-                <ul class="nav nav-pills nav-sidebar flex-column">
-                    <li class="nav-item">
-                        <a href="index.html" class="nav-link">
-                            <i class="nav-icon fas fa-home"></i> 首页
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="users.html" class="nav-link active">
-                            <i class="nav-icon fas fa-users"></i> 用户管理
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="orders.html" class="nav-link">
-                            <i class="nav-icon fas fa-list"></i> 订单记录
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="plans.html" class="nav-link">
-                            <i class="nav-icon fas fa-calendar"></i> 计划管理
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="settings.html" class="nav-link">
-                            <i class="nav-icon fas fa-cog"></i> 设置
-                        </a>
-                    </li>
-                </ul>
-            </nav>
+            <section class="content">
+                <div class="container-fluid">
+                    <div class="card">
+                        <div class="card-body table-responsive p-0">
+                            <table class="table table-striped">
+                                <colgroup>
+                                    <col class="pin-column">     <!-- 置顶 -->
+                                    <col class="avatar-column">  <!-- 头像 -->
+                                    <col class="user-column">    <!-- 用户名 -->
+                                    <col class="time-column">    <!-- 注册时间 -->
+                                    <col class="deposit-column"> <!-- 累计充值 -->
+                                    <col class="withdraw-column"><!-- 累计出款 -->
+                                    <col class="profit-column">  <!-- 纯利 -->
+                                    <col class="note-column">    <!-- 备注 -->
+                                    <col class="action-column">  <!-- 操作 -->
+                                </colgroup>
+                                <thead>
+                                    <tr>
+                                        <th class="pin-column">
+                                            <button class="btn btn-sm btn-light pin-user-btn" id="toggleAllPins">
+                                                <i class="fas fa-thumbtack"></i>
+                                            </button>
+                                        </th>
+                                        <th class="avatar-column">头像</th>
+                                        <th class="user-column">用户名</th>
+                                        <th class="time-column">注册时间</th>
+                                        <th class="deposit-column">累计充值</th>
+                                        <th class="withdraw-column">累计出款</th>
+                                        <th class="profit-column">纯利</th>
+                                        <th class="note-column">备注</th>
+                                        <th class="action-column">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="userTableBody">
+                                    <!-- 用户数据将通过 JavaScript 动态填充 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 置顶按钮应该放在这里，content-wrapper 的末尾 -->
+            <button class="back-to-top" title="返回顶部">
+                <i class="fas fa-chevron-up"></i>
+            </button>
         </div>
-    </aside>
+    </div>
 
-    <!-- 内容区 -->
-    <div class="content-wrapper">
-        <section class="content-header">
-            <div class="container-fluid">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h1>用户管理</h1>
-                    <button id="exportUsers" class="btn btn-success">
-                        <i class="fas fa-file-excel"></i> 导出用户数据
+    <!-- 新增计划模态框 -->
+    <div class="modal fade" id="addPlanModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">新增计划</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
                     </button>
                 </div>
-                <div class="row mb-2">
-                    <div class="col-sm-6">
-                        <div class="input-group">
-                            <input type="text" id="searchUser" class="form-control" placeholder="搜索用户名...">
+                <div class="modal-body">
+                    <form id="planForm">
+                        <div class="form-group">
+                            <label>用户名</label>
+                            <input type="text" id="planUserId" class="form-control" required 
+                                   placeholder="请输入用户名">
                         </div>
-                    </div>
-                    <div class="col-sm-6">
-                        <div class="float-right">
-                            <select id="sortField" class="form-control">
-                                <option value="registerTime">注册时间</option>
-                                <option value="totalDeposit">累计充值</option>
-                                <option value="totalWithdrawal">累计出款</option>
-                                <option value="netAmount">纯利</option>
-                            </select>
+                        <div class="form-group">
+                            <label>计划内容</label>
+                            <textarea id="planContent" class="form-control" rows="3" required 
+                                    placeholder="请输入计划内容"></textarea>
                         </div>
-                    </div>
+                        <div class="form-group">
+                            <label>计划时间</label>
+                            <input type="datetime-local" id="planTime" class="form-control" required>
+                        </div>
+                    </form>
                 </div>
-            </div>
-        </section>
-
-        <section class="content">
-            <div class="container-fluid">
-                <div class="card">
-                    <div class="card-body table-responsive p-0">
-                        <table class="table table-striped user-table">
-                            <colgroup>
-                                <col style="width: 60px">  <!-- 置顶 -->
-                                <col style="width: 150px"> <!-- 用户名 -->
-                                <col style="width: 150px"> <!-- 注册时间 -->
-                                <col style="width: 150px">  <!-- 累计充值 -->
-                                <col style="width: 150px">  <!-- 累计出款 -->
-                                <col style="width: 150px">  <!-- 纯利 -->
-                                <col>                      <!-- 备注 - 自适应 -->
-                                <col style="width: 60px">  <!-- 操作 -->
-                            </colgroup>
-                            <thead>
-                                <tr style="background-color: #f4f6f9;">
-                                    <th class="text-center" style="vertical-align: middle; background-color: #f4f6f9; border: 1px solid #dee2e6; line-height: 50px; padding: 0;">置顶</th>
-                                    <th class="text-center" style="vertical-align: middle; background-color: #f4f6f9; border: 1px solid #dee2e6;">用户名</th>
-                                    <th class="text-center" style="vertical-align: middle; background-color: #f4f6f9; border: 1px solid #dee2e6;">注册时间</th>
-                                    <th class="text-center" style="vertical-align: middle; background-color: #f4f6f9; border: 1px solid #dee2e6;">累计充值</th>
-                                    <th class="text-center" style="vertical-align: middle; background-color: #f4f6f9; border: 1px solid #dee2e6;">累计出款</th>
-                                    <th class="text-center" style="vertical-align: middle; background-color: #f4f6f9; border: 1px solid #dee2e6;">纯利</th>
-                                    <th class="text-center" style="vertical-align: middle; background-color: #f4f6f9; border: 1px solid #dee2e6;">备注</th>
-                                    <th class="operation-column text-center" style="vertical-align: middle; background-color: #f4f6f9; border: 1px solid #dee2e6;">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="userTableBody">
-                                <!-- 用户数据将通过 JavaScript 动态填充 -->
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="savePlan">保存</button>
                 </div>
-            </div>
-        </section>
-    </div>
-</div>
-
-<!-- 新增计划模态框 -->
-<div class="modal fade" id="addPlanModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">新增计划</h5>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="planForm">
-                    <div class="form-group">
-                        <label>用户名</label>
-                        <input type="text" id="planUserId" class="form-control" required 
-                               placeholder="请输入用户名">
-                    </div>
-                    <div class="form-group">
-                        <label>计划内容</label>
-                        <textarea id="planContent" class="form-control" rows="3" required 
-                                placeholder="请输入计划内容"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>计划时间</label>
-                        <input type="datetime-local" id="planTime" class="form-control" required>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary" id="savePlan">保存</button>
             </div>
         </div>
     </div>
-</div>
 
-<style>
-    .note-input {
-        width: 100%;
-        min-height: 60px;
-        resize: vertical;
-        border: 1px solid #ddd;
-        padding: 5px;
-        border-radius: 4px;
-    }
-    
-    .operation-column {
-        white-space: nowrap;
-        width: 80px;
-    }
-    
-    /* 进一步缩小置顶列样式 */
-    .pin-column {
-        width: 24px !important;
-        min-width: 24px !important;
-        max-width: 24px !important;
-        padding: 2px !important;
-    }
-    
-    .table td {
-        vertical-align: middle;
-    }
+    <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            console.log('Initializing database...');
+            await initDB();
+            console.log('Database initialized successfully');
 
-    /* 调整置顶按钮样式 */
-    .pin-user-btn {
-        padding: 2px !important;
-        font-size: 10px !important;
-        width: 20px !important;
-        height: 20px !important;
-        margin: 0 !important;
-    }
+            // 自动调整文本框高度的函数
+            function autoResizeTextarea(textarea) {
+                textarea.style.height = 'auto'; // 重置高度
+                textarea.style.height = (textarea.scrollHeight) + 'px'; // 设置新高度
+            }
 
-    .pin-user-btn i {
-        font-size: 10px;
-        margin: 0 !important;
-    }
-
-    /* 确保单元格内容居中 */
-    .pin-column, 
-    .pin-column .btn {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-</style>
-
-<script>
-document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        console.log('Initializing database...');
-        await initDB();
-        console.log('Database initialized successfully');
-
-        const loadUsers = async () => {
-            try {
-                console.log('Loading users...');
-                const users = await getAllUsers();
-                const pinnedUsers = await getPinnedUsers();
-                console.log('Retrieved users:', users);
-                
-                const searchTerm = document.getElementById('searchUser').value.toLowerCase();
-                const sortField = document.getElementById('sortField').value;
-                
-                // 过滤用户
-                const filteredUsers = users.filter(user => 
-                    user.userId.toLowerCase().includes(searchTerm)
-                );
-                
-                // 排序用户
-                filteredUsers.sort((a, b) => {
-                    // 先按置顶状态排序
-                    const isPinnedA = pinnedUsers.includes(a.userId);
-                    const isPinnedB = pinnedUsers.includes(b.userId);
-                    if (isPinnedA !== isPinnedB) return isPinnedB ? 1 : -1;
+            // 为所有备注输入框添加自动调整大小的功能
+            function setupTextareaAutoResize() {
+                document.querySelectorAll('.note-input').forEach(textarea => {
+                    // 初始调整
+                    autoResizeTextarea(textarea);
                     
-                    // 默认按注册时间降序排序
-                    const timeA = new Date(a.registerTime || 0).getTime();
-                    const timeB = new Date(b.registerTime || 0).getTime();
-                    
-                    // 如果选择了其他排序字段且不是注册时间，则使用选择的字段排序
-                    if (sortField && sortField !== 'registerTime') {
-                        if (sortField === 'netAmount') {
-                            return (parseFloat(b.totalDeposit) - parseFloat(b.totalWithdrawal)) - 
-                                   (parseFloat(a.totalDeposit) - parseFloat(a.totalWithdrawal));
-                        }
-                        return parseFloat(b[sortField] || 0) - parseFloat(a[sortField] || 0);
-                    }
-                    
-                    // 默认返回注册时间的比较结果
-                    return timeB - timeA;
-                });
-
-                const tbody = document.getElementById('userTableBody');
-                tbody.innerHTML = filteredUsers.map(user => {
-                    const isPinned = pinnedUsers.includes(user.userId);
-                    return `
-                        <tr class="${isPinned ? 'table-warning' : ''}">
-                            <td class="text-center">
-                                <button class="btn btn-sm ${isPinned ? 'btn-warning' : 'btn-light'} pin-user-btn" 
-                                        data-userid="${user.userId}"
-                                        title="${isPinned ? '取消置顶' : '置顶用户'}">
-                                    <i class="fas fa-thumbtack"></i>
-                                </button>
-                            </td>
-                            <td>${user.userId}</td>
-                            <td>${user.registerTime || ''}</td>
-                            <td>${user.totalDeposit || '0.00'}</td>
-                            <td>${user.totalWithdrawal || '0.00'}</td>
-                            <td>${((parseFloat(user.totalDeposit) || 0) - (parseFloat(user.totalWithdrawal) || 0)).toFixed(2)}</td>
-                            <td>
-                                <textarea class="note-input" data-user-id="${user.userId}">${user.note || ''}</textarea>
-                            </td>
-                            <td class="operation-column">
-                                <button class="btn btn-danger btn-sm delete-user" data-user-id="${user.userId}">删除</button>
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
-
-                // 绑定置顶按钮事件
-                document.querySelectorAll('.pin-user-btn').forEach(btn => {
-                    btn.addEventListener('click', async (e) => {
-                        const userId = e.currentTarget.dataset.userid;
-                        const isPinned = e.currentTarget.classList.contains('btn-warning');
-                        
-                        try {
-                            await updatePinnedUsers(userId, !isPinned);
-                            await loadUsers(); // 重新加载列表以更新显示
-                        } catch (error) {
-                            console.error('置顶操作失败:', error);
-                            alert('置顶操作失败');
-                        }
+                    // 输入时调整
+                    textarea.addEventListener('input', (e) => {
+                        autoResizeTextarea(e.target);
                     });
                 });
-
-                console.log('Users table updated successfully');
-            } catch (error) {
-                console.error('Error loading users:', error);
-                alert('加载用户列表失败：' + error.message);
             }
-        };
 
-        // 绑定事件
-        document.getElementById('searchUser').addEventListener('input', () => {
-            console.log('Search term changed, reloading users...');
-            loadUsers();
-        });
-        
-        document.getElementById('sortField').addEventListener('change', () => {
-            console.log('Sort field changed, reloading users...');
-            loadUsers();
-        });
-        
-        // 备注更新
-        document.addEventListener('change', async (e) => {
-            if (e.target.classList.contains('note-input')) {
+            const loadUsers = async () => {
                 try {
-                    const userId = e.target.dataset.userId;
-                    const note = e.target.value;
-                    console.log('Updating note for user:', userId);
-                    await updateUserNote(userId, note);
-                    console.log('Note updated successfully');
-                } catch (error) {
-                    console.error('Error updating note:', error);
-                    alert('更新备注失败：' + error.message);
-                }
-            }
-        });
-        
-        // 删除用户
-        document.addEventListener('click', async (e) => {
-            if (e.target.classList.contains('delete-user')) {
-                try {
-                    const userId = e.target.dataset.userId;
-                    console.log('Attempting to delete user:', userId);
+                    console.log('Loading users...');
+                    const users = await getAllUsers();
+                    const pinnedUsers = await getPinnedUsers();
+                    console.log('Retrieved users:', users);
                     
-                    if (confirm(`确认删除用户 ${userId} 吗？此操作将删除该用户的所有相关数据！`)) {
-                        await deleteUser(userId);
-                        console.log('User deleted successfully');
-                        await loadUsers();
-                        alert('用户已删除');
+                    const searchTerm = document.getElementById('searchUser').value.toLowerCase();
+                    const sortField = document.getElementById('sortField').value;
+                    
+                    // 过滤和排序用户
+                    let filteredUsers = users.filter(user => 
+                        user.userId.toLowerCase().includes(searchTerm)
+                    );
+
+                    // 修改排序逻辑
+                    filteredUsers.sort((a, b) => {
+                        const pinnedA = pinnedUsers.find(p => p.userId === a.userId);
+                        const pinnedB = pinnedUsers.find(p => p.userId === b.userId);
+                        
+                        // 首先按置顶优先级排序
+                        if (pinnedA || pinnedB) {
+                            if (!pinnedA) return 1;
+                            if (!pinnedB) return -1;
+                            if (pinnedA.priority !== pinnedB.priority) {
+                                return pinnedB.priority - pinnedA.priority;
+                            }
+                        }
+                        
+                        // 其次按选择的字段排序
+                        if (sortField === 'registerTime') {
+                            return new Date(b.registerTime) - new Date(a.registerTime);
+                        } else {
+                            const valueA = parseFloat(a[sortField] || 0);
+                            const valueB = parseFloat(b[sortField] || 0);
+                            return valueB - valueA;
+                        }
+                    });
+
+                    // 更新表格内容
+                    const tbody = document.getElementById('userTableBody');
+                    tbody.innerHTML = filteredUsers.map(user => {
+                        const pinnedInfo = pinnedUsers.find(p => p.userId === user.userId);
+                        const pinBtnClass = !pinnedInfo ? '' : 
+                                          pinnedInfo.priority === 2 ? 'priority-pinned' :
+                                          pinnedInfo.priority === 1 ? 'pinned' : '';
+                        
+                        const netAmount = (parseFloat(user.totalDeposit || 0) - parseFloat(user.totalWithdrawal || 0)).toFixed(2);
+                        
+                        return `
+                            <tr>
+                                <td class="pin-column">
+                                    <div class="btn-container">
+                                        <button class="btn btn-sm btn-light pin-user-btn ${pinBtnClass}" 
+                                                data-user-id="${user.userId}">
+                                            <i class="fas fa-thumbtack"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                                <td class="avatar-cell" data-user-id="${user.userId}">
+                                    <div class="avatar-wrapper">
+                                        ${user.avatar ? 
+                                            `<img src="${user.avatar}" class="avatar-img" alt="用户头像">` :
+                                            `<div class="avatar-placeholder"><i class="fas fa-user"></i></div>`
+                                        }
+                                        <button class="btn btn-sm btn-light paste-avatar-btn">
+                                            <i class="fas fa-paste"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                                <td>${user.userId}</td>
+                                <td data-register-time="${user.registerTime}">${TimeZoneManager.formatDate(user.registerTime)}</td>
+                                <td>${user.totalDeposit || '0.00'}</td>
+                                <td>${user.totalWithdrawal || '0.00'}</td>
+                                <td>${netAmount}</td>
+                                <td class="note-cell">
+                                    <textarea class="note-input" data-user-id="${user.userId}">${user.note || ''}</textarea>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-danger delete-user-btn" data-user-id="${user.userId}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+
+                    // 绑定置顶按钮事件
+                    document.querySelectorAll('.pin-user-btn').forEach(btn => {
+                        btn.addEventListener('click', async function() {
+                            const userId = this.dataset.userId;
+                            const currentPinned = pinnedUsers.find(p => p.userId === userId);
+                            const currentPriority = currentPinned ? currentPinned.priority : 0;
+                            
+                            // 循环切换：不置顶(0) -> 置顶(1) -> 优先置顶(2) -> 不置顶(0)
+                            const newPriority = currentPriority === 2 ? 0 : currentPriority + 1;
+                            
+                            await updatePinnedUsers(userId, newPriority > 0, false, newPriority);
+                            await loadUsers();
+                        });
+                    });
+
+                    // 设置备注框的自动调整大小
+                    setupTextareaAutoResize();
+                    
+                    console.log('Users table updated successfully');
+                } catch (error) {
+                    console.error('Error loading users:', error);
+                    alert('加载用户列表失败：' + error.message);
+                }
+            };
+
+            // 绑定事件
+            document.getElementById('searchUser').addEventListener('input', () => {
+                console.log('Search term changed, reloading users...');
+                loadUsers();
+            });
+            
+            document.getElementById('sortField').addEventListener('change', () => {
+                console.log('Sort field changed, reloading users...');
+                loadUsers();
+            });
+            
+            // 备注更新
+            document.addEventListener('change', async (e) => {
+                if (e.target.classList.contains('note-input')) {
+                    try {
+                        const userId = e.target.dataset.userId;
+                        const note = e.target.value;
+                        const size = {
+                            height: e.target.style.height,
+                            width: e.target.style.width
+                        };
+                        
+                        // 保存备注内容
+                        await updateUserNote(userId, note);
+                        // 保存备注框大小
+                        await updateUserNoteInputSize(userId, size);
+                        
+                        console.log('Note and size updated successfully');
+                    } catch (error) {
+                        console.error('Error updating note or size:', error);
+                        alert('更新失败：' + error.message);
+                    }
+                }
+            });
+            
+            // 删除用户
+            document.addEventListener('click', async (e) => {
+                if (e.target.classList.contains('delete-user-btn')) {
+                    try {
+                        const userId = e.target.dataset.userId;
+                        console.log('Attempting to delete user:', userId);
+                        
+                        if (confirm(`确认删除用户 ${userId} 吗？此操作将删除该用户的所有相关数据！`)) {
+                            await deleteUser(userId);
+                            console.log('User deleted successfully');
+                            await loadUsers();
+                            alert('用户已删除');
+                        }
+                    } catch (error) {
+                        console.error('Error deleting user:', error);
+                        alert('删除用户失败：' + error.message);
+                    }
+                }
+            });
+
+            // 导出用户数据
+            document.getElementById('exportUsers').addEventListener('click', async () => {
+                try {
+                    const users = await getAllUsers();
+                    const csvContent = '\uFEFF' + // 添加 BOM 以支持中文
+                        '用户名,注册时间,累计充值,累计出款,纯利,备注\n' +
+                        users.map(user => {
+                            const netAmount = (parseFloat(user.totalDeposit) - parseFloat(user.totalWithdrawal)).toFixed(2);
+                            return `${user.userId},${user.registerTime || ''},${user.totalDeposit || '0.00'},${user.totalWithdrawal || '0.00'},${netAmount},"${user.note || ''}"`;
+                        }).join('\n');
+
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `用户数据_${new Date().toLocaleDateString()}.csv`;
+                    link.click();
+                } catch (error) {
+                    console.error('Error exporting users:', error);
+                    alert('导出用户数据失败：' + error.message);
+                }
+            });
+
+            // 添加取消所有置顶的功能
+            document.getElementById('toggleAllPins').addEventListener('click', async () => {
+                try {
+                    const pinnedUsers = await getPinnedUsers();
+                    if (pinnedUsers.length > 0) {
+                        if (confirm('确认取消所有置顶用户吗？')) {
+                            // 清空置顶用户列表
+                            await updatePinnedUsers('', false, true); // 添加第三个参数表示清空所有
+                            await loadUsers(); // 重新加载列表
+                        }
                     }
                 } catch (error) {
-                    console.error('Error deleting user:', error);
-                    alert('删除用户失败：' + error.message);
+                    console.error('取消所有置顶失败:', error);
+                    alert('取消所有置顶失败');
+                }
+            });
+
+            // 修改粘贴事件处理
+            document.addEventListener('click', async (e) => {
+                const pasteBtn = e.target.closest('.paste-avatar-btn');
+                if (pasteBtn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const cell = pasteBtn.closest('.avatar-cell');
+                    if (cell) {
+                        try {
+                            const result = await navigator.clipboard.read();
+                            for (const item of result) {
+                                if (item.types.includes('image/png') || item.types.includes('image/jpeg')) {
+                                    const blob = await item.getType(item.types[0]);
+                                    const reader = new FileReader();
+                                    reader.onload = async (e) => {
+                                        try {
+                                            const base64Image = e.target.result;
+                                            await updateUserAvatar(cell.dataset.userId, base64Image);
+                                            await loadUsers();
+                                        } catch (error) {
+                                            console.error('更新头像失败:', error);
+                                            alert('更新头像失败');
+                                        }
+                                    };
+                                    reader.readAsDataURL(blob);
+                                    break;
+                                }
+                            }
+                        } catch (error) {
+                            console.error('读取剪贴板失败:', error);
+                            alert('请先复制一张图片到剪贴板');
+                        }
+                    }
+                }
+            });
+
+            // 设置默认日期为今天
+            document.getElementById('quickOrderDate').value = TimeZoneManager.formatDate(new Date());
+            
+            // 设置默认用户名为上次输入的用户名
+            const lastUserId = localStorage.getItem('lastUserId');
+            if (lastUserId) {
+                document.getElementById('quickUserId').value = lastUserId;
+            }
+
+            // 添加用户名输入框的焦点事件
+            document.getElementById('quickUserId').addEventListener('focus', function() {
+                this.value = '';  // 清空输入框
+            });
+
+            // 修改充值按钮点击事件
+            document.getElementById('quickDepositBtn').addEventListener('click', async () => {
+                try {
+                    const currentTime = TimeZoneManager.getCurrentTime();
+                    const data = {
+                        userId: document.getElementById('quickUserId').value,
+                        orderDate: document.getElementById('quickOrderDate').value,
+                        amount: parseFloat(document.getElementById('quickAmount').value),
+                        type: 'deposit',
+                        submitTime: currentTime.toLocaleString('zh-CN'),
+                        timeZone: TimeZoneManager.currentTimeZone
+                    };
+
+                    if (!data.userId || !data.amount || isNaN(data.amount)) {
+                        return;
+                    }
+
+                    // 先触发烟花效果，不等待数据库操作
+                    if (data.amount >= 1000) {
+                        showFireworks(data.amount);
+                    }
+
+                    localStorage.setItem('lastUserId', data.userId);
+                    await addOrder(data);
+
+                    // 使用新的函数更新备注
+                    const orderNote = document.getElementById('quickOrderNote').value.trim();
+                    await updateUserNoteWithTransaction(data.userId, data.amount, '充值', orderNote);
+
+                    // 重置表单时保留用户名
+                    const currentUserId = data.userId;
+                    document.getElementById('quickOrderForm').reset();
+                    document.getElementById('quickOrderDate').value = TimeZoneManager.formatDate(new Date());
+                    document.getElementById('quickUserId').value = currentUserId;
+
+                    // 重新加载用户列表
+                    await loadUsers();
+                } catch (error) {
+                    console.error('添加失败：', error);
+                    alert('添加失败：' + error.message);
+                }
+            });
+
+            // 修改出款按钮点击事件
+            document.getElementById('quickWithdrawalBtn').addEventListener('click', async () => {
+                try {
+                    const currentTime = TimeZoneManager.getCurrentTime();
+                    const data = {
+                        userId: document.getElementById('quickUserId').value,
+                        orderDate: document.getElementById('quickOrderDate').value,
+                        amount: parseFloat(document.getElementById('quickAmount').value),
+                        type: 'withdrawal',
+                        submitTime: currentTime.toLocaleString('zh-CN'),
+                        timeZone: TimeZoneManager.currentTimeZone
+                    };
+
+                    if (!data.userId || !data.amount || isNaN(data.amount)) {
+                        return;
+                    }
+
+                    localStorage.setItem('lastUserId', data.userId);
+                    await addOrder(data);
+
+                    // 使用新的函数更新备注
+                    const orderNote = document.getElementById('quickOrderNote').value.trim();
+                    await updateUserNoteWithTransaction(data.userId, data.amount, '出款', orderNote);
+
+                    // 重置表单时保留用户名
+                    const currentUserId = data.userId;
+                    document.getElementById('quickOrderForm').reset();
+                    document.getElementById('quickOrderDate').value = TimeZoneManager.formatDate(new Date());
+                    document.getElementById('quickUserId').value = currentUserId;
+
+                    // 重新加载用户列表
+                    await loadUsers();
+                } catch (error) {
+                    console.error('添加失败：', error);
+                    alert('添加失败：' + error.message);
+                }
+            });
+
+            // 为快速录入表单的所有输入框添加回车事件
+            const quickInputs = ['quickOrderDate', 'quickUserId', 'quickAmount', 'quickOrderNote'];
+            quickInputs.forEach(id => {
+                document.getElementById(id).addEventListener('keypress', async (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        document.getElementById('quickDepositBtn').click();
+                    }
+                });
+            });
+
+            // 检查设置并显示/隐藏相应功能
+            const showQuickEntry = localStorage.getItem('showQuickEntry') !== 'false';
+            const showAvatars = localStorage.getItem('showAvatars') !== 'false';
+
+            // 处理快速录入功能
+            const quickEntryCard = document.querySelector('.card.mb-3');
+            if (quickEntryCard) {
+                quickEntryCard.style.display = showQuickEntry ? 'block' : 'none';
+            }
+
+            // 定义更新头像列可见性的函数
+            function updateAvatarColumnVisibility(show) {
+                const avatarColumn = document.querySelector('th.avatar-column');
+                const avatarCells = document.querySelectorAll('td.avatar-cell');
+                const avatarColgroup = document.querySelector('colgroup col:nth-child(2)');
+                const table = document.querySelector('.table');
+
+                if (avatarColumn) {
+                    avatarColumn.style.display = show ? '' : 'none';
+                }
+                avatarCells.forEach(cell => {
+                    cell.style.display = show ? '' : 'none';
+                });
+                if (avatarColgroup) {
+                    avatarColgroup.style.width = show ? '75px' : '0';
+                }
+                if (table) {
+                    if (show) {
+                        table.classList.remove('no-avatar');
+                    } else {
+                        table.classList.add('no-avatar');
+                    }
                 }
             }
-        });
 
-        // 导出用户数据
-        document.getElementById('exportUsers').addEventListener('click', async () => {
-            try {
-                const users = await getAllUsers();
-                const csvContent = '\uFEFF' + // 添加 BOM 以支持中文
-                    '用户名,注册时间,累计充值,累计出款,纯利,备注\n' +
-                    users.map(user => {
-                        const netAmount = (parseFloat(user.totalDeposit || 0) - parseFloat(user.totalWithdrawal || 0)).toFixed(2);
-                        return `${user.userId},${user.registerTime || ''},${user.totalDeposit || '0.00'},${user.totalWithdrawal || '0.00'},${netAmount},"${user.note || ''}"`;
-                    }).join('\n');
+            // 初始应用头像显示设置
+            updateAvatarColumnVisibility(showAvatars);
 
-                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = `用户数据_${new Date().toLocaleDateString()}.csv`;
-                link.click();
-            } catch (error) {
-                console.error('Error exporting users:', error);
-                alert('导出用户数据失败：' + error.message);
+            // 检查备注输入框设置
+            const showNoteInput = localStorage.getItem('showNoteInput') !== 'false';
+            const noteGroup = document.querySelector('#quickOrderForm .note-group');
+            const form = document.querySelector('.data-entry-form');
+
+            if (noteGroup && form) {
+                noteGroup.style.display = showNoteInput ? 'block' : 'none';
             }
-        });
 
-        // 初始加载用户列表
-        await loadUsers();
-        console.log('Initial users loaded successfully');
-    } catch (error) {
-        console.error('Initialization error:', error);
-        alert('系统初始化失败');
+            // 初始加载用户列表
+            await loadUsers();
+            console.log('Initial users loaded successfully');
+        } catch (error) {
+            console.error('Initialization error:', error);
+            alert('系统初始化失败');
+        }
+    });
+
+    // 复制相同的 updateUserNoteWithTransaction 函数到 users.html
+    const updateUserNoteWithTransaction = async (userId, amount, type, manualNote) => {
+        // 检查是否启用了自动备注
+        const autoNoteEnabled = localStorage.getItem('autoNote') !== 'false';
+        if (!autoNoteEnabled) {
+            // 如果关闭了自动备注，但有手动备注，仍然需要保存手动备注
+            if (manualNote) {
+                try {
+                    const user = await getUser(userId);
+                    const currentDate = new Date().toLocaleDateString();
+                    const newNote = `${currentDate}: ${manualNote}\n${user?.note || ''}`;
+                    await updateUserNote(userId, newNote);
+                } catch (error) {
+                    console.error('更新备注失败：', error);
+                }
+            }
+            return;
+        }
+
+        try {
+            const user = await getUser(userId);
+            const currentDate = new Date().toLocaleDateString();
+            const autoNote = `${currentDate}: ${amount} ${type}`;
+            
+            let newNote = '';
+            if (manualNote) {
+                newNote = `${autoNote} (${manualNote})\n${user?.note || ''}`;
+            } else {
+                newNote = `${autoNote}\n${user?.note || ''}`;
+            }
+            
+            await updateUserNote(userId, newNote);
+        } catch (error) {
+            console.error('更新备注失败：', error);
+        }
+    };
+
+    // 示例：在充值成功后调用 showFireworks()
+    function onDepositSuccess(amount) {
+        if (amount >= 1000) {
+            showFireworks();
+        }
     }
-});
-</script>
+    </script>
 </body>
 </html>

@@ -121,6 +121,49 @@
 
                 <div class="card">
                     <div class="card-header">
+                        <h3 class="card-title">功能设置</h3>
+                    </div>
+                    <div class="card-body">
+                        <!-- 快速录入开关 -->
+                        <div class="form-group">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="showQuickEntry" checked>
+                                <label class="custom-control-label" for="showQuickEntry">显示快速录入功能</label>
+                            </div>
+                            <small class="form-text text-muted">控制用户管理页面的快速录入功能显示</small>
+                        </div>
+
+                        <!-- 用户头像开关 -->
+                        <div class="form-group">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="showAvatars" checked>
+                                <label class="custom-control-label" for="showAvatars">显示用户头像功能</label>
+                            </div>
+                            <small class="form-text text-muted">控制用户管理页面的头像显示</small>
+                        </div>
+
+                        <!-- 备注输入框开关 -->
+                        <div class="form-group">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="showNoteInput" checked>
+                                <label class="custom-control-label" for="showNoteInput">显示备注输入框</label>
+                            </div>
+                            <small class="form-text text-muted">控制首页和用户管理页面的备注输入框显示</small>
+                        </div>
+
+                        <!-- 自动记录备注开关 -->
+                        <div class="form-group">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="autoNoteSwitch" checked>
+                                <label class="custom-control-label" for="autoNoteSwitch">自动记录充值/出款信息到备注</label>
+                            </div>
+                            <small class="form-text text-muted">开启后，充值和出款操作会自动记录到用户备注中</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
                         <h3 class="card-title">数据操作</h3>
                     </div>
                     <div class="card-body">
@@ -175,6 +218,45 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // ... 现有代码 ...
+
+    // 加载用户管理页面设置
+    const showQuickEntry = localStorage.getItem('showQuickEntry') !== 'false';
+    const showAvatars = localStorage.getItem('showAvatars') !== 'false';
+    
+    document.getElementById('showQuickEntry').checked = showQuickEntry;
+    document.getElementById('showAvatars').checked = showAvatars;
+
+    // 保存用户管理页面设置
+    document.getElementById('showQuickEntry').addEventListener('change', (e) => {
+        localStorage.setItem('showQuickEntry', e.target.checked);
+    });
+
+    document.getElementById('showAvatars').addEventListener('change', (e) => {
+        localStorage.setItem('showAvatars', e.target.checked);
+    });
+
+    // 初始化备注输入框设置
+    const showNoteInput = localStorage.getItem('showNoteInput') !== 'false';
+    document.getElementById('showNoteInput').checked = showNoteInput;
+
+    document.getElementById('showNoteInput').addEventListener('change', function() {
+        localStorage.setItem('showNoteInput', this.checked);
+    });
+
+    // 初始化自动备注开关状态
+    const autoNoteSwitch = document.getElementById('autoNoteSwitch');
+    autoNoteSwitch.checked = localStorage.getItem('autoNote') !== 'false';
+
+    // 监听自动备注开关变化
+    autoNoteSwitch.addEventListener('change', (e) => {
+        localStorage.setItem('autoNote', e.target.checked);
+    });
+});
+</script>
 
 </body>
 </html> 
