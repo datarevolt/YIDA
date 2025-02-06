@@ -910,10 +910,34 @@ body.sidebar-collapse .back-to-top {
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.5);
-    z-index: 9998; /* 比通知窗口低一级 */
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s ease;
+    z-index: 1040 !important;
+    display: none;
+    cursor: pointer;  /* 指示可点击 */
+}
+
+/* 悬浮窗样式 */
+.user-records-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.15);
+    z-index: 9999;
+    max-width: 800px;
+    width: 90%;
+    max-height: 80vh;
+    display: none;
+}
+
+/* 确保点击事件正确传递 */
+.user-records-modal {
+    pointer-events: auto;
+}
+
+.modal-backdrop.show {
+    display: block;
 }
 
 /* 悬浮通知窗口样式 */
@@ -1027,4 +1051,99 @@ body.sidebar-collapse .back-to-top {
 
 .pin-user-btn:hover {
     transform: scale(1.1);
+}
+
+/* 用户记录悬浮窗样式 */
+.user-records-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.15);
+    z-index: 9999;
+    max-width: 800px;
+    width: 90%;
+    max-height: 80vh;
+    display: none;
+    pointer-events: auto;  /* 确保悬浮窗可以接收点击事件 */
+}
+
+.user-records-modal.show {
+    display: block;
+}
+
+.user-records-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.user-records-body {
+    padding: 20px;
+    max-height: calc(80vh - 120px);
+    overflow-y: auto;
+}
+
+.user-records-table {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.modal-backdrop.show {
+    opacity: 0.5;
+    display: block;
+}
+
+/* 记录列样式 */
+.records-column {
+    width: 60px !important;
+    min-width: 60px !important;
+    max-width: 60px !important;
+    text-align: center;
+}
+
+.records-column .btn {
+    padding: 0.25rem 0.5rem;
+}
+
+/* 防止点击悬浮窗内部时关闭 */
+.user-records-modal * {
+    pointer-events: auto;
+}
+
+/* 搜索和排序区域样式 */
+.d-flex.align-items-center {
+    margin: 10px 0;
+}
+
+.d-flex.align-items-center .form-control {
+    height: 38px !important;
+}
+
+#searchUser, 
+#sortField {
+    height: 38px !important;
+    padding: .375rem .75rem;
+    font-size: 1rem;
+    border-radius: 0.25rem;
+    border: 1px solid #ced4da;
+    background-color: #fff;
+    margin: 0;  /* 重置所有边距 */
+}
+
+#toggleNoteResize {
+    height: 38px !important;
+    margin: 0;  /* 重置所有边距 */
+}
+
+/* 确保按钮组对齐 */
+.text-right {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    height: 38px;
 }

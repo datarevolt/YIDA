@@ -18,6 +18,25 @@
     <script src="main.js"></script>
     <script src="plans.js"></script>
     <script src="fireworks.js"></script>
+    <style>
+        /* 确保搜索框和排序框高度一致 */
+        #searchUser, 
+        #sortField {
+            height: 38px !important;
+            line-height: 1.5;
+            padding: .375rem .75rem;
+            font-size: 1rem;
+            border-radius: 0.25rem;
+            border: 1px solid #ced4da;
+            box-sizing: border-box;
+        }
+
+        /* 确保 form-inline 的元素对齐 */
+        .form-inline .form-control {
+            display: inline-block;
+            vertical-align: middle;
+        }
+    </style>
 </head>
 <body class="hold-transition sidebar-mini">
     <!-- 烟花画布 -->
@@ -148,20 +167,24 @@
                         </div>
                     </div>
 
-                    <div class="row mb-2">
-                        <div class="col-sm-6">
-                            <div class="input-group">
-                                <input type="text" id="searchUser" class="form-control" placeholder="搜索用户名...">
-                            </div>
-                        </div>
-                        <div class="col-sm-6">
-                            <div class="float-right">
-                                <select id="sortField" class="form-control">
+                    <div class="row mb-2 align-items-center">
+                        <div class="col-sm-8">
+                            <div class="d-flex align-items-center">
+                                <input type="text" id="searchUser" class="form-control mr-2" style="width: 250px;" placeholder="搜索用户名...">
+                                <select id="sortField" class="form-control" style="width: 150px;">
                                     <option value="registerTime">注册时间</option>
                                     <option value="totalDeposit">累计充值</option>
                                     <option value="totalWithdrawal">累计出款</option>
                                     <option value="netAmount">纯利</option>
                                 </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="text-right">
+                                <button id="toggleNoteResize" class="btn btn-outline-secondary" title="切换备注框自动伸缩">
+                                    <i class="fas fa-arrows-alt-v"></i>
+                                    <span class="ml-1">备注框展开</span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -182,6 +205,7 @@
                                     <col class="withdraw-column"><!-- 累计出款 -->
                                     <col class="profit-column">  <!-- 纯利 -->
                                     <col class="note-column">    <!-- 备注 -->
+                                    <col class="records-column">  <!-- 记录 -->
                                     <col class="action-column">  <!-- 操作 -->
                                 </colgroup>
                                 <thead>
@@ -198,6 +222,7 @@
                                         <th class="withdraw-column">累计出款</th>
                                         <th class="profit-column">纯利</th>
                                         <th class="note-column">备注</th>
+                                        <th class="records-column">记录</th>
                                         <th class="action-column">操作</th>
                                     </tr>
                                 </thead>
@@ -252,6 +277,30 @@
             </div>
         </div>
     </div>
+
+    <!-- 用户记录悬浮窗 -->
+    <div class="user-records-modal" id="userRecordsModal">
+        <div class="user-records-header">
+            <h5 class="modal-title">用户记录</h5>
+            <button type="button" class="close" onclick="closeUserRecords()">
+                <span>&times;</span>
+            </button>
+        </div>
+        <div class="user-records-body">
+            <table class="table table-bordered user-records-table">
+                <thead>
+                    <tr>
+                        <th>时间</th>
+                        <th>类型</th>
+                        <th>金额</th>
+                    </tr>
+                </thead>
+                <tbody id="userRecordsTableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="modal-backdrop" id="recordsBackdrop"></div>
 
     <script>
     document.addEventListener('DOMContentLoaded', async () => {
@@ -354,10 +403,15 @@
                                 <td>${user.totalDeposit || '0.00'}</td>
                                 <td>${user.totalWithdrawal || '0.00'}</td>
                                 <td>${netAmount}</td>
-                                <td class="note-cell">
+                                <td class="note-column">
                                     <textarea class="note-input" data-user-id="${user.userId}">${user.note || ''}</textarea>
                                 </td>
-                                <td>
+                                <td class="records-column">
+                                    <button class="btn btn-sm btn-info show-records-btn" data-user-id="${user.userId}">
+                                        <i class="fas fa-history"></i>
+                                    </button>
+                                </td>
+                                <td class="action-column">
                                     <button class="btn btn-sm btn-danger delete-user-btn" data-user-id="${user.userId}">
                                         <i class="fas fa-trash"></i>
                                     </button>
@@ -675,6 +729,59 @@
                 noteGroup.style.display = showNoteInput ? 'block' : 'none';
             }
 
+            // 绑定记录按钮点击事件
+            document.addEventListener('click', async (e) => {
+                const recordsBtn = e.target.closest('.show-records-btn');
+                if (recordsBtn) {
+                    const userId = recordsBtn.dataset.userId;
+                    await showUserRecords(userId);
+                }
+            });
+
+            // 添加备注框自动伸缩切换功能
+            const toggleNoteResizeBtn = document.getElementById('toggleNoteResize');
+            let isAutoResize = localStorage.getItem('noteAutoResize') !== 'false';
+            
+            // 更新按钮状态
+            function updateResizeButtonState() {
+                if (isAutoResize) {
+                    toggleNoteResizeBtn.classList.add('active');
+                    toggleNoteResizeBtn.classList.add('btn-primary');
+                    toggleNoteResizeBtn.classList.remove('btn-outline-secondary');
+                } else {
+                    toggleNoteResizeBtn.classList.remove('active');
+                    toggleNoteResizeBtn.classList.remove('btn-primary');
+                    toggleNoteResizeBtn.classList.add('btn-outline-secondary');
+                }
+            }
+
+            // 更新所有备注框的样式
+            function updateNoteInputsStyle() {
+                document.querySelectorAll('.note-input').forEach(textarea => {
+                    if (isAutoResize) {
+                        textarea.style.overflow = 'hidden';
+                        textarea.style.resize = 'none';
+                        autoResizeTextarea(textarea);
+                    } else {
+                        textarea.style.overflow = 'auto';
+                        textarea.style.resize = 'vertical';
+                        textarea.style.height = '60px';  // 重置为默认高度
+                    }
+                });
+            }
+
+            // 初始化状态
+            updateResizeButtonState();
+            updateNoteInputsStyle();
+
+            // 添加切换按钮点击事件
+            toggleNoteResizeBtn.addEventListener('click', () => {
+                isAutoResize = !isAutoResize;
+                localStorage.setItem('noteAutoResize', isAutoResize);
+                updateResizeButtonState();
+                updateNoteInputsStyle();
+            });
+
             // 初始加载用户列表
             await loadUsers();
             console.log('Initial users loaded successfully');
@@ -727,6 +834,13 @@
             showFireworks();
         }
     }
+
+    // 添加遮罩层点击事件监听
+    document.getElementById('recordsBackdrop').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeUserRecords();
+        }
+    });
     </script>
 </body>
 </html>

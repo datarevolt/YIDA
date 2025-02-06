@@ -185,7 +185,7 @@ const PlansManager = {
         },
 
         setDefault: () => {
-            const now = TimeZoneManager.getCurrentTime();
+            const now = new Date();
             const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
             const planTimeInput = document.getElementById('planTime');
             if (planTimeInput) planTimeInput.value = dateStr;
@@ -355,16 +355,20 @@ const PlansManager = {
     // 初始化
     init: async () => {
         try {
-            // 等待主数据库初始化完成
+            // 确保数据库初始化
             if (!db) {
-                await new Promise(resolve => {
-                    const checkDb = setInterval(() => {
-                        if (window.db) {
-                            clearInterval(checkDb);
-                            db = window.db;
-                            resolve();
+                await new Promise((resolve) => {
+                    const request = indexedDB.open('FinanceDB', 4);
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        if (!db.objectStoreNames.contains('plans')) {
+                            db.createObjectStore('plans', { keyPath: 'id' });
                         }
-                    }, 100);
+                    };
+                    request.onsuccess = () => {
+                        window.db = request.result;
+                        resolve();
+                    };
                 });
             }
 
@@ -391,25 +395,14 @@ const PlansManager = {
                 }
             });
 
-            // 移除之前的事件绑定，重新绑定确认按钮事件
-            $(document).off('click', '.confirm-plan');
-            $(document).on('click', '.confirm-plan', async function(e) {
-                e.preventDefault();  // 防止事件冒泡
-                const planId = parseInt($(this).data('id'));
-                if (!planId) {
-                    console.error('无效的计划ID');
-                    return;
-                }
-                
-                try {
-                    await PlansManager.confirmExpired(planId);
-                } catch (error) {
-                    console.error('确认计划失败：', error);
-                    alert('确认计划失败：' + error.message);
-                }
+            // 添加计划按钮事件
+            $(document).off('click', '#addPlanButton');
+            $(document).on('click', '#addPlanButton', () => {
+                $('#addPlanModal').modal('show');
             });
 
             // 统一处理模态框事件
+            $(document).off('show.bs.modal', '#addPlanModal');
             $(document).on('show.bs.modal', '#addPlanModal', () => {
                 const planForm = document.getElementById('planForm');
                 if (planForm) {
@@ -419,11 +412,12 @@ const PlansManager = {
             });
 
             // 统一处理保存计划事件
+            $(document).off('click', '#savePlan');
             $(document).on('click', '#savePlan', async () => {
                 try {
-                    const userId = document.getElementById('planUserId')?.value;
-                    const planTime = document.getElementById('planTime')?.value;
-                    const content = document.getElementById('planContent')?.value;
+                    const userId = document.getElementById('planUserId').value;
+                    const planTime = document.getElementById('planTime').value;
+                    const content = document.getElementById('planContent').value;
 
                     if (!userId || !planTime || !content) {
                         alert('请填写完整信息');
@@ -433,22 +427,14 @@ const PlansManager = {
                     const data = { userId, planTime, content };
                     await PlansManager.db.add(data);
                     $('#addPlanModal').modal('hide');
-                    
-                    const planForm = document.getElementById('planForm');
-                    if (planForm) {
-                        planForm.reset();
-                        PlansManager.time.setDefault();
-                    }
-                    
-                    await PlansManager.checkTodoStatus();
-                    
-                    // 如果在计划管理页面，刷新列表
-                    if (document.getElementById('planTableBody')) {
-                        await PlansManager.loadPlans();
-                    }
+
+                    document.getElementById('planForm').reset();
+                    PlansManager.time.setDefault();
+
+                    await PlansManager.loadPlans();
                 } catch (error) {
                     console.error('添加计划失败：', error);
-                    alert('添加计划失败：' + error);
+                    alert('添加计划失败：' + error.message);
                 }
             });
 
@@ -476,6 +462,18 @@ const PlansManager = {
                         console.error('清除所有计划失败：', error);
                         alert('清除所有计划失败：' + error.message);
                     }
+                }
+            });
+
+            // 确认计划按钮事件
+            $(document).off('click', '.confirm-plan');
+            $(document).on('click', '.confirm-plan', async function() {
+                const planId = parseInt($(this).data('id'));
+                try {
+                    await PlansManager.confirmExpired(planId);
+                } catch (error) {
+                    console.error('确认计划失败：', error);
+                    alert('确认计划失败：' + error.message);
                 }
             });
 

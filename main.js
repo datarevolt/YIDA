@@ -1,10 +1,10 @@
 // 数据库初始化
 let db;
-const DB_NAME = 'FinanceDB';
-const DB_VERSION = 4;  // 改回版本号 4
+const DB_NAME = 'FinanceDB'; // 请勿修改数据库名称
+const DB_VERSION = 4; // 请勿修改数据库版本号
 
 // 获取系统时区，但默认使用 'local'
-const systemTZ = 'local';  // 改为直接使用 'local'
+const systemTZ = 'local'; // 改为直接使用 'local'
 let currentTimeZone = localStorage.getItem('timeZone') || systemTZ;
 
 const initDB = () => {
@@ -818,7 +818,14 @@ const loadUsers = async () => {
                             <i class="fas fa-thumbtack"></i>
                         </button>
                     </td>
-                    <!-- 其他单元格... -->
+                    <td class="action-column">
+                        <button class="btn btn-sm btn-danger delete-user-btn" data-user-id="${user.userId}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        <button class="btn btn-sm btn-info show-records-btn" data-user-id="${user.userId}">
+                            <i class="fas fa-history"></i>
+                        </button>
+                    </td>
                 </tr>
             `;
         }).join('');
@@ -854,3 +861,46 @@ async function resetAllData() {
         dbDeleteRequest.onerror = () => reject(dbDeleteRequest.error);
     });
 }
+
+// 显示用户记录
+async function showUserRecords(userId) {
+    try {
+        const transaction = db.transaction(['orders'], 'readonly');
+        const store = transaction.objectStore('orders');
+        const index = store.index('userId');
+        const request = index.getAll(userId);
+        
+        request.onsuccess = () => {
+            const records = request.result;
+            // 按时间倒序排序
+            records.sort((a, b) => new Date(b.submitTime) - new Date(a.submitTime));
+            
+            const tbody = document.getElementById('userRecordsTableBody');
+            
+            tbody.innerHTML = records.map(record => `
+                <tr>
+                    <td>${record.submitTime}</td>
+                    <td>${record.type === 'deposit' ? '充值' : '出款'}</td>
+                    <td class="${record.type === 'deposit' ? 'text-success' : 'text-danger'}">
+                        ${record.type === 'deposit' ? '+' : '-'}${record.amount}
+                    </td>
+                </tr>
+            `).join('');
+            
+            document.getElementById('userRecordsModal').classList.add('show');
+            document.getElementById('recordsBackdrop').classList.add('show');
+        };
+    } catch (error) {
+        console.error('获取用户记录失败:', error);
+        alert('获取用户记录失败');
+    }
+}
+
+// 关闭用户记录
+function closeUserRecords() {
+    document.getElementById('userRecordsModal').classList.remove('show');
+    document.getElementById('recordsBackdrop').classList.remove('show');
+}
+
+// 点击遮罩层关闭
+document.getElementById('recordsBackdrop')?.addEventListener('click', closeUserRecords);
