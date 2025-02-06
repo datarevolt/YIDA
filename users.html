@@ -311,21 +311,54 @@
 
             // 自动调整文本框高度的函数
             function autoResizeTextarea(textarea) {
+                // 检查是否启用了自动调整
+                if (localStorage.getItem('noteAutoResize') === 'false') {
+                    textarea.style.height = '100px';  // 如果是关闭状态，设置固定高度
+                    return;
+                }
+                
                 textarea.style.height = 'auto'; // 重置高度
                 textarea.style.height = (textarea.scrollHeight) + 'px'; // 设置新高度
+            }
+
+            // 更新所有备注框的样式
+            function updateNoteInputsStyle() {
+                document.querySelectorAll('.note-input').forEach(textarea => {
+                    if (isAutoResize) {
+                        textarea.style.overflow = 'hidden';
+                        textarea.style.resize = 'none';
+                        autoResizeTextarea(textarea);
+                    } else {
+                        textarea.style.overflow = 'auto';
+                        textarea.style.resize = 'vertical';
+                        textarea.style.height = '80px';  // 固定高度
+                        textarea.style.minHeight = '80px'; // 最小高度
+                    }
+                });
             }
 
             // 为所有备注输入框添加自动调整大小的功能
             function setupTextareaAutoResize() {
                 document.querySelectorAll('.note-input').forEach(textarea => {
-                    // 初始调整
-                    autoResizeTextarea(textarea);
+                    // 移除之前的事件监听器
+                    textarea.removeEventListener('input', autoResizeHandler);
                     
-                    // 输入时调整
-                    textarea.addEventListener('input', (e) => {
-                        autoResizeTextarea(e.target);
-                    });
+                    // 设置初始高度
+                    if (localStorage.getItem('noteAutoResize') === 'false') {
+                        textarea.style.height = '80px';
+                    }
+                    
+                    // 只有当自动调整是开启状态时才添加事件监听
+                    if (localStorage.getItem('noteAutoResize') !== 'false') {
+                        autoResizeTextarea(textarea);
+                        textarea.addEventListener('input', autoResizeHandler);
+                    }
                 });
+            }
+
+            // 创建一个命名的处理函数，方便移除
+            function autoResizeHandler(e) {
+                autoResizeTextarea(e.target);
             }
 
             const loadUsers = async () => {
@@ -741,7 +774,7 @@
 
             // 添加备注框自动伸缩切换功能
             const toggleNoteResizeBtn = document.getElementById('toggleNoteResize');
-            let isAutoResize = localStorage.getItem('noteAutoResize') !== 'false';
+            let isAutoResize = localStorage.getItem('noteAutoResize') !== 'false';  // 从 localStorage 读取状态
             
             // 更新按钮状态
             function updateResizeButtonState() {
@@ -756,21 +789,6 @@
                 }
             }
 
-            // 更新所有备注框的样式
-            function updateNoteInputsStyle() {
-                document.querySelectorAll('.note-input').forEach(textarea => {
-                    if (isAutoResize) {
-                        textarea.style.overflow = 'hidden';
-                        textarea.style.resize = 'none';
-                        autoResizeTextarea(textarea);
-                    } else {
-                        textarea.style.overflow = 'auto';
-                        textarea.style.resize = 'vertical';
-                        textarea.style.height = '60px';  // 重置为默认高度
-                    }
-                });
-            }
-
             // 初始化状态
             updateResizeButtonState();
             updateNoteInputsStyle();
@@ -778,9 +796,21 @@
             // 添加切换按钮点击事件
             toggleNoteResizeBtn.addEventListener('click', () => {
                 isAutoResize = !isAutoResize;
-                localStorage.setItem('noteAutoResize', isAutoResize);
+                localStorage.setItem('noteAutoResize', isAutoResize);  // 保存到 localStorage
                 updateResizeButtonState();
                 updateNoteInputsStyle();
+            });
+
+            // 在页面加载完成后立即执行
+            document.addEventListener('DOMContentLoaded', () => {
+                // 确保在页面加载时就设置正确的高度
+                const isAutoResize = localStorage.getItem('noteAutoResize') !== 'false';
+                document.querySelectorAll('.note-input').forEach(textarea => {
+                    if (!isAutoResize) {
+                        textarea.style.height = '100px';
+                        textarea.style.minHeight = '100px';
+                    }
+                });
             });
 
             // 初始加载用户列表
