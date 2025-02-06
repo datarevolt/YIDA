@@ -903,7 +903,7 @@
         navigator.clipboard.read().then(items => {
             // 检查是否有内容
             if (items.length === 0) {
-                showAlert('剪贴板为空');
+                alert('剪贴板为空');
                 return;
             }
 
@@ -913,7 +913,7 @@
             );
 
             if (!imageItem) {
-                showAlert('剪贴板中没有图片');
+                alert('剪贴板中没有图片');
                 return;
             }
 
@@ -927,7 +927,7 @@
             });
         }).catch(err => {
             console.error('读取剪贴板失败:', err);
-            showAlert('读取剪贴板失败，请确保已授予剪贴板访问权限');
+            alert('读取剪贴板失败，请确保已授予剪贴板访问权限');
         });
     }
     </script>
