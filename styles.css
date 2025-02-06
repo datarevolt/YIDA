@@ -1010,3 +1010,21 @@ body.sidebar-collapse .back-to-top {
     pointer-events: none;
     background: transparent; /* 确保背景透明 */
 }
+
+/* 置顶按钮样式 */
+.pin-user-btn {
+    color: #6c757d;
+    transition: all 0.2s;
+}
+
+.pin-user-btn.pinned {
+    color: #ffc107;  /* 普通置顶的颜色 - 黄色 */
+}
+
+.pin-user-btn.priority-pinned {
+    color: #dc3545;  /* 优先置顶的颜色 - 红色 */
+}
+
+.pin-user-btn:hover {
+    transform: scale(1.1);
+}
