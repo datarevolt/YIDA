@@ -15,6 +15,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="weather.css">
+    <link rel="stylesheet" href="crypto.css">
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
@@ -23,6 +25,9 @@
     <script src="main.js"></script>
     <script src="plans.js"></script>
     <script src="fireworks.js"></script>
+    <script src="weather.js"></script>
+    <script src="crypto.js"></script>
+    <script src="hash-lookup.js"></script>
 </head>
 <!-- 烟花画布 -->
 <canvas id="fireworksCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 999999; pointer-events: none;"></canvas>
@@ -36,7 +41,61 @@
                 <a class="nav-link" href="#" data-widget="pushmenu"><i class="fas fa-bars"></i></a>
             </li>
         </ul>
+
+        <!-- 右侧导航项 -->
         <ul class="navbar-nav ml-auto">
+            <!-- 哈希查询搜索框 -->
+            <li class="nav-item" id="hashSearchContainer">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="quickHashInput" 
+                           placeholder="搜索钱包地址或交易哈希 (支持BTC, ETH, USDT网络)" />
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" id="quickHashSearch" type="button">
+                            <span>搜索</span>
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </li>
+            
+            <!-- 加密货币显示 -->
+            <li class="nav-item" id="cryptoContainer">
+                <span class="nav-link" id="cryptoDisplay">
+                    <i class="fab fa-bitcoin"></i>
+                    <span id="cryptoSymbol">BTC</span>
+                    <span id="cryptoPrice">--</span>
+                    <span id="cryptoChange">--</span>
+                </span>
+            </li>
+            
+            <!-- 天气组件 -->
+            <li class="nav-item" id="weatherContainer">
+                <span class="nav-link" id="weatherDisplay">
+                    <i class="fas fa-cloud-sun"></i>
+                    <span id="weatherDesc"></span>
+                    <span id="weatherTemp"></span>°F
+                </span>
+                <div class="weather-hover-content">
+                    <!-- 添加地区选择按钮 -->
+                    <div class="weather-location-section">
+                        <button class="btn btn-outline-primary btn-sm location-btn" data-toggle="modal" data-target="#locationModal">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span id="weatherLocation">杰克逊维尔</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </div>
+                    <div class="weather-section">
+                        <div class="section-title">未来12小时预报</div>
+                        <div id="hourlyForecast" class="forecast-row"></div>
+                    </div>
+                    <div class="weather-section">
+                        <div class="section-title">过去7天历史天气</div>
+                        <div id="weatherHistory" class="history-row"></div>
+                    </div>
+                </div>
+            </li>
+            
+            <!-- 其他导航项 -->
             <li class="nav-item mr-3">
                 <span class="nav-link" id="currentTime"></span>
             </li>
@@ -306,9 +365,132 @@
 <!-- 添加遮罩层 -->
 <div class="modal-backdrop"></div>
 
+<!-- 地区选择模态框 -->
+<div class="modal fade" id="locationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">选择地区</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <input type="text" class="form-control" id="citySearch" placeholder="搜索城市...">
+                </div>
+                <div id="cityList" class="list-group mt-3">
+                    <!-- 常用城市列表 -->
+                    <button class="list-group-item list-group-item-action" data-lat="30.3322" data-lon="-81.6557" data-name="杰克逊维尔">
+                        杰克逊维尔
+                    </button>
+                    <button class="list-group-item list-group-item-action" data-lat="40.7128" data-lon="-74.0060" data-name="纽约">
+                        纽约
+                    </button>
+                    <button class="list-group-item list-group-item-action" data-lat="34.0522" data-lon="-118.2437" data-name="洛杉矶">
+                        洛杉矶
+                    </button>
+                    <button class="list-group-item list-group-item-action" data-lat="41.8781" data-lon="-87.6298" data-name="芝加哥">
+                        芝加哥
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 加密货币模态框 -->
+<div class="modal" id="cryptoChartModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cryptoChartModalLabel">加密货币行情</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="crypto-favorites-bar">
+                    <div class="favorites-buttons" id="favoritesList">
+                        <!-- 这里会动态添加收藏的加密货币按钮 -->
+                    </div>
+                    <button class="add-crypto-btn" id="addCryptoBtn" data-toggle="modal" data-target="#addFavoriteModal">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div id="tradingview_widget"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 添加收藏模态框 -->
+<div class="modal fade" id="addFavoriteModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">添加收藏</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="search-box">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">
+                                <i class="fas fa-search"></i>
+                            </span>
+                        </div>
+                        <input type="text" class="form-control" id="cryptoSearch" placeholder="搜索币种...">
+                    </div>
+                </div>
+                <div class="crypto-list" id="cryptoList">
+                    <!-- 这里会动态加载币种列表 -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 添加样式 -->
+<style>
+    .modal-backdrop {
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+    
+    .modal-content {
+        background-color: #f8f9fa;
+        border-radius: 12px;
+    }
+    
+    .iframe-container {
+        position: relative;
+        overflow: hidden;
+        border-radius: 8px;
+        background-color: white;
+    }
+    
+    .iframe-container iframe {
+        transition: all 0.3s ease;
+    }
+    
+    .btn-outline-primary {
+        margin: 0 5px;
+    }
+    
+    .btn-outline-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
     try {
+        // 初始化天气组件
+        await WeatherManager.init();
+
         // 检查是否首次使用
         if (!localStorage.getItem('timeZoneNotified')) {
             alert('请先到设置页面设置时区！避免影响数据统计');
@@ -577,7 +759,7 @@ const updateUserNoteWithTransaction = async (userId, amount, type, manualNote) =
 
 // 检查版本并显示通知
 async function checkVersionAndShowNotice() {
-    const currentVersion = '5.1';
+    const currentVersion = '5.3';
     const lastVersion = localStorage.getItem('lastVersion');
     
     if (currentVersion !== lastVersion) {
@@ -592,16 +774,11 @@ async function checkVersionAndShowNotice() {
                     </button>
                 </div>
                 <div class="floating-notice-body">
-                    <p>🎉 5.1版本新功能上线：</p>
+                    <p>🎉 5.3牛逼版本新功能上线：</p>
                     <ul>
-                        <li>添加客户头像功能</li>
-                        <li>无置顶，置顶，优先置顶</li>
-                        <li>备注自动记录充值/出款以及金额信息</li>
-                        <li>添加备注快捷输入</li>
-                        <li>用户管理页面添加数据录入</li>
-                        <li>可在设置中自定义功能开关</li>
-                        <li>增添一键查看用户充出记录悬浮窗</li>
-                        <li>备注输入框展开开关</li>
+                        <li>添加天气API组件</li>
+                        <li>添加加密货币API带K线图组件</li>
+                        <li>添加地址快速查询组件</li>
                         <li>修复已知BUG</li>
                     </ul>
                 </div>
@@ -634,6 +811,27 @@ function closeNotice(button) {
         backdrop.remove();
     }, 300);
 }
+
+// 页面加载完成后绑定事件
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('页面加载完成，开始初始化...');
+    
+    // 搜索按钮点击事件
+    document.getElementById('quickHashSearch').addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('搜索按钮被点击');
+        HashLookup.quickSearch();
+    });
+
+    // 输入框回车事件
+    document.getElementById('quickHashInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            console.log('检测到回车键');
+            HashLookup.quickSearch();
+        }
+    });
+});
 </script>
 </body>
 </html>

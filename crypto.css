@@ -1,0 +1,744 @@
+/* 加密货币导航栏样式 */
+#cryptoContainer {
+    position: relative;
+    margin-right: 15px;
+    margin-left: 30px;
+}
+
+#cryptoDisplay {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#cryptoDisplay:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* 币种图标 */
+#cryptoDisplay i {
+    color: #f7931a;
+    font-size: 18px;
+    margin-right: 5px;
+}
+
+/* 币种符号 */
+#cryptoSymbol {
+    font-weight: 500;
+    margin-right: 8px;
+}
+
+/* 价格显示 */
+#cryptoPrice {
+    margin-right: 8px;
+}
+
+/* 涨跌幅 */
+#cryptoChange {
+    font-size: 14px;
+    min-width: 60px;
+    text-align: right;
+    font-weight: 500;
+}
+
+/* 价格和涨跌幅的通用样式 */
+.up {
+    color: #26a69a;
+    background-color: rgba(0, 200, 83, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.down {
+    color: #ef5350;
+    background-color: rgba(255, 61, 0, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    #cryptoDisplay {
+        padding: 8px 10px;
+        gap: 8px;
+    }
+    
+    #cryptoPrice {
+        min-width: 70px;
+    }
+    
+    #cryptoChange {
+        min-width: 55px;
+    }
+}
+
+/* 确保价格显示在导航栏内正确对齐 */
+.navbar-nav.mx-auto {
+    flex: 1;
+    justify-content: center;
+}
+
+/* 在现有样式后添加 */
+#cryptoChartModal .modal-content {
+    background-color: #fff;
+    border-radius: 8px;
+}
+
+#cryptoChartModal .modal-header {
+    border-bottom: 1px solid #eee;
+    padding: 1rem 1.5rem;
+}
+
+#cryptoChartModal .modal-body {
+    padding: 0; /* 移除内边距以适应图表 */
+}
+
+#cryptoChartModal .modal-dialog {
+    max-width: 80vw;  /* 保持宽度80% */
+    width: 80vw;
+    margin: 1.75rem auto;
+}
+
+#cryptoChartModal .modal-content {
+    height: 65vh;  /* 减小高度到65% */
+}
+
+#cryptoChartModal .modal-body {
+    padding: 0;
+    height: calc(65vh - 60px);  /* 相应调整body高度 */
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+#tradingview_widget {
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+    background: #fff;
+}
+
+/* 确保图表内容完全显示 */
+#tradingview_widget iframe {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* 收藏功能相关样式 */
+.favorites-popup {
+    position: absolute;
+    top: 60px;
+    right: 20px;
+    width: 200px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    z-index: 1000;
+}
+
+.favorites-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.favorites-list {
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 10px 0;
+}
+
+.favorite-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 15px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.favorite-item:hover {
+    background-color: #f8f9fa;
+}
+
+.favorite-item .remove-favorite {
+    color: #dc3545;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.favorite-item:hover .remove-favorite {
+    opacity: 1;
+}
+
+.btn-group .btn {
+    padding: 0.25rem 0.75rem;
+}
+
+.btn-group .btn i {
+    margin-right: 4px;
+}
+
+/* 收藏按钮组样式 */
+.crypto-favorites-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 15px;
+    border-bottom: 1px solid #eee;
+    background: #fff;
+}
+
+.favorites-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.crypto-favorite-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background: #f8f9fa;
+    color: #333;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.crypto-favorite-btn:hover {
+    background: #e9ecef;
+}
+
+.crypto-favorite-btn.active {
+    background: #007bff;
+    color: white;
+    border-color: #0056b3;
+}
+
+.add-crypto-btn {
+    padding: 6px 12px;
+    border: 1px dashed #dee2e6;
+    border-radius: 4px;
+    background: white;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.add-crypto-btn:hover {
+    background: #f8f9fa;
+    border-color: #adb5bd;
+}
+
+/* 搜索模态框样式 */
+#addFavoriteModal .modal-dialog {
+    max-width: 400px;
+}
+
+/* 搜索结果样式 */
+.crypto-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.crypto-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 15px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+}
+
+.crypto-list-item:hover {
+    background: #f8f9fa;
+}
+
+.crypto-list-item .crypto-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.crypto-list-item .crypto-name {
+    font-weight: 500;
+}
+
+.crypto-list-item .crypto-symbol {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.crypto-list-item.already-added {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* 搜索结果高亮 */
+.highlight {
+    background-color: #fff3cd;
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
+/* 搜索框样式 */
+.search-box {
+    position: sticky;
+    top: 0;
+    background: white;
+    padding: 15px;
+    margin: -1rem -1rem 1rem -1rem;
+    border-bottom: 1px solid #dee2e6;
+    z-index: 1;
+}
+
+/* 美化滚动条 */
+.crypto-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.crypto-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.crypto-list::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.crypto-list::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* 加密货币图标样式 */
+.crypto-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 8px;
+    border-radius: 50%;
+    object-fit: contain;
+}
+
+/* 收藏按钮中的图标 */
+.crypto-favorite-btn .crypto-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 6px;
+    vertical-align: text-bottom;
+}
+
+/* 搜索结果中的图标 */
+.crypto-list-item .crypto-icon {
+    width: 32px;
+    height: 32px;
+    margin-right: 12px;
+}
+
+/* 导航栏中的图标 */
+#cryptoDisplay .crypto-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    object-fit: contain;
+}
+
+/* 哈希查询样式 */
+.hash-result {
+    margin-top: 20px;
+}
+
+.hash-info {
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.hash-info .label {
+    font-weight: 500;
+    color: #666;
+    margin-right: 8px;
+}
+
+.hash-info .value {
+    word-break: break-all;
+}
+
+.hash-info .row {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: flex-start;
+}
+
+.hash-status {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.hash-status.success {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.hash-status.pending {
+    background-color: #fff3e0;
+    color: #ef6c00;
+}
+
+.hash-status.failed {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+#hashInput {
+    font-family: monospace;
+}
+
+.btn-paste {
+    padding: 0.375rem 0.75rem;
+}
+
+.network-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+    vertical-align: text-bottom;
+}
+
+/* 导航栏右侧工具栏样式 */
+.navbar-nav.ml-auto {
+    display: flex;
+    align-items: center;
+    height: 32px;
+}
+
+.navbar-nav.ml-auto .nav-item {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+/* 哈希查询按钮样式 */
+#showHashLookup {
+    padding: 0.5rem 0.8rem;
+    color: #666;
+    transition: color 0.2s;
+}
+
+#showHashLookup:hover {
+    color: #333;
+}
+
+#showHashLookup i {
+    font-size: 1.1rem;
+}
+
+/* 确保导航栏项目对齐 */
+.navbar-nav.ml-auto {
+    display: flex;
+    align-items: center;
+}
+
+.navbar-nav.ml-auto .nav-item {
+    display: flex;
+    align-items: center;
+}
+
+/* 响应式布局调整 */
+@media (max-width: 991.98px) {
+    .navbar-nav.ml-auto {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    #showHashLookup, #cryptoDisplay {
+        width: 100%;
+        padding: 8px 15px;
+    }
+}
+
+/* 地址查询结果样式 */
+.address-summary {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.total-value {
+    font-size: 1.2em;
+    margin-bottom: 8px;
+}
+
+.total-value .label {
+    color: #666;
+    margin-right: 10px;
+}
+
+.total-value .value {
+    font-weight: 500;
+    color: #28a745;
+}
+
+.tokens-list {
+    margin-top: 20px;
+}
+
+.token-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.token-item:last-child {
+    border-bottom: none;
+}
+
+.token-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.token-symbol {
+    font-weight: 500;
+    color: #333;
+}
+
+.token-balance {
+    color: #666;
+}
+
+.token-value {
+    color: #28a745;
+    font-weight: 500;
+}
+
+/* 搜索框和按钮样式 */
+#hashSearchContainer {
+    margin-right: 30px;
+    min-width: 500px;
+    margin-left: auto;
+}
+
+#hashSearchContainer .input-group {
+    height: 32px;
+}
+
+#quickHashInput {
+    height: 32px;
+    border: 1px solid #ddd;
+    border-right: none;
+    padding: 0 12px;
+    font-size: 14px;
+}
+
+#quickHashSearch {
+    height: 32px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background-color: #3498db;
+    border: none;
+    color: white;
+}
+
+#quickHashSearch:hover {
+    background-color: #2980b9;
+}
+
+#quickHashSearch span {
+    font-size: 14px;
+}
+
+#quickHashSearch i {
+    font-size: 14px;
+}
+
+/* 确保按钮显示 */
+.input-group-append {
+    display: flex;
+}
+
+/* 输入框焦点样式 */
+#quickHashInput:focus {
+    box-shadow: none;
+    border-color: #3498db;
+}
+
+/* 添加网络标识显示 */
+.network-badge {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-left: 8px;
+    background-color: #e9ecef;
+    color: #495057;
+}
+
+/* 交易信息样式 */
+.transaction-info {
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.network-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 15px;
+}
+
+.network-badge.ethereum {
+    background-color: #627EEA;
+    color: white;
+}
+
+.network-badge.bsc {
+    background-color: #F3BA2F;
+    color: black;
+}
+
+.tx-details .row {
+    display: flex;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.tx-details .label {
+    width: 100px;
+    color: #666;
+    font-weight: 500;
+}
+
+.tx-details .value {
+    flex: 1;
+    word-break: break-all;
+}
+
+.status-confirmed {
+    color: #28a745;
+}
+
+.status-pending {
+    color: #ffc107;
+}
+
+.status-failed {
+    color: #dc3545;
+}
+
+/* 结果显示样式 */
+.results-container {
+    padding: 15px;
+}
+
+.total-assets {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.total-assets .value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #28a745;
+}
+
+.token-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 8px;
+    border-radius: 50%;
+}
+
+.table {
+    margin-top: 15px;
+}
+
+.table th {
+    font-weight: 500;
+    background: #f8f9fa;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+/* 最小化窗口样式 */
+#minimizedWindow {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 250px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    z-index: 1050;
+    transition: all 0.3s ease;
+}
+
+.minimized-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    cursor: move;
+}
+
+.minimized-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.minimized-buttons button {
+    padding: 4px 8px;
+    font-size: 12px;
+    border: none;
+    background: transparent;
+}
+
+.minimized-buttons button:hover {
+    background: rgba(0,0,0,0.05);
+    border-radius: 4px;
+}
+
+/* 确保模态窗口正确显示 */
+.modal-header-buttons {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.modal-header-buttons button {
+    padding: 4px 8px;
+    font-size: 12px;
+    background: transparent;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+.modal-header-buttons button:hover {
+    background: rgba(0,0,0,0.05);
+}
