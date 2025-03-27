@@ -487,118 +487,60 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('页面加载完成，开始初始化...');
+    
     try {
+        // 确保数据库只初始化一次
+        console.log('初始化数据库...');
+        await initDB();
+        console.log('数据库初始化完成');
+        
         // 初始化天气组件
         await WeatherManager.init();
-
-        // 检查是否首次使用
-        if (!localStorage.getItem('timeZoneNotified')) {
-            alert('请先到设置页面设置时区！避免影响数据统计');
-            localStorage.setItem('timeZoneNotified', 'true');
-        }
-
-        console.log('Initializing database...');
-        await initDB();
-        console.log('Database initialized successfully');
-
-        // 设置默认日期为当前本地时间
+        
+        // 初始化加密货币组件
+        await CryptoManager.init();
+        
+        // 初始化订单日期为当前日期
         const now = new Date();
         document.getElementById('orderDate').value = TimeZoneManager.formatDate(now);
-        document.getElementById('monthFilter').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
         
-        // 从 localStorage 获取上次输入的用户名
-        const lastUserId = localStorage.getItem('lastUserId');
-        if (lastUserId) {
-            document.getElementById('userId').value = lastUserId;
+        // 初始化月份过滤器为当前月份
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const monthFilter = document.getElementById('monthFilter');
+        if (monthFilter) {
+            monthFilter.value = `${year}-${month}`;
         }
-
-        // 用户名输入框点击时清空
-        document.getElementById('userId').addEventListener('focus', function() {
-            this.value = '';
-        });
-
+        
         // 初始化图表
-        const chart = new ApexCharts(document.querySelector("#trendChart"), {
-            chart: { 
-                type: 'line',
-                height: 400
-            },
-            stroke: { curve: 'smooth' },
-            series: [],
-            xaxis: { type: 'datetime' },
-            colors: ['#17a2b8', '#dc3545', '#28a745'],
-            tooltip: { x: { format: 'dd/MM' } }
+        initChart();
+        
+        // 初始加载数据
+        await loadData();
+        console.log('初始数据加载完成');
+        
+        // 初始化代办计划状态
+        await PlansManager.checkTodoStatus();
+        
+        // 检查版本并显示通知
+        await checkVersionAndShowNotice();
+        
+        // 搜索按钮点击事件
+        document.getElementById('quickHashSearch').addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('搜索按钮被点击');
+            HashLookup.quickSearch();
         });
-        chart.render();
 
-        // 加载数据函数
-        const loadData = async () => {
-            try {
-                const monthStr = document.getElementById('monthFilter').value;
-                const [year, month] = monthStr.split('-');
-                
-                const orders = await getAllOrders();
-                console.log('Loaded orders:', orders);
-                
-                // 根据订单日期筛选当月订单，而不是提交时间
-                const monthlyOrders = orders.filter(order => {
-                    const orderDate = order.orderDate.split('T')[0];  // 只取日期部分
-                    return orderDate.startsWith(`${year}-${month}`);
-                });
-
-                // 更新统计卡片
-                const totals = monthlyOrders.reduce((acc, order) => {
-                    if (order.type === 'deposit') {
-                        acc.deposit += parseFloat(order.amount);
-                    } else {
-                        acc.withdrawal += parseFloat(order.amount);
-                    }
-                    return acc;
-                }, { deposit: 0, withdrawal: 0 });
-
-                document.getElementById('totalDeposit').textContent = totals.deposit.toFixed(2);
-                document.getElementById('totalWithdrawal').textContent = totals.withdrawal.toFixed(2);
-                document.getElementById('netAmount').textContent = (totals.deposit - totals.withdrawal).toFixed(2);
-
-                // 更新趋势图，使用订单日期
-                const dailyData = {};
-                monthlyOrders.forEach(order => {
-                    const day = order.orderDate.split('T')[0];
-                    dailyData[day] = dailyData[day] || { deposit: 0, withdrawal: 0 };
-                    if (order.type === 'deposit') {
-                        dailyData[day].deposit += parseFloat(order.amount);
-                    } else {
-                        dailyData[day].withdrawal += parseFloat(order.amount);
-                    }
-                });
-
-                const days = Array.from({length: 31}, (_, i) => {
-                    const d = new Date(year, month - 1, i + 1);
-                    return TimeZoneManager.formatDate(d);
-                }).filter(d => {
-                    const [y, m] = d.split('-');
-                    return parseInt(m) === parseInt(month);
-                });
-
-                chart.updateSeries([{
-                    name: '充值',
-                    data: days.map(d => [new Date(d).getTime(), dailyData[d]?.deposit || 0])
-                }, {
-                    name: '出款',
-                    data: days.map(d => [new Date(d).getTime(), dailyData[d]?.withdrawal || 0])
-                }, {
-                    name: '净额',
-                    data: days.map(d => [new Date(d).getTime(), 
-                        (dailyData[d]?.deposit || 0) - (dailyData[d]?.withdrawal || 0)])
-                }]);
-            } catch (error) {
-                console.error('加载数据失败：', error);
-                alert('加载数据失败');
+        // 输入框回车事件
+        document.getElementById('quickHashInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                console.log('检测到回车键');
+                HashLookup.quickSearch();
             }
-        };
-
-        // 绑定事件
-        document.getElementById('monthFilter').addEventListener('change', loadData);
+        });
         
         // 充值按钮点击事件
         document.getElementById('depositBtn').addEventListener('click', async () => {
@@ -660,7 +602,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     timeZone: TimeZoneManager.currentTimeZone
                 };
 
+                console.log('出款数据:', data);
+
                 if (!data.userId || !data.amount || isNaN(data.amount)) {
+                    console.log('数据验证失败');
                     return;
                 }
 
@@ -684,7 +629,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 alert('添加失败：' + error.message);
             }
         });
-
+        
         // 为数据录入表单的所有输入框添加回车事件
         const orderInputs = ['orderDate', 'userId', 'amount', 'orderNote'];
         orderInputs.forEach(id => {
@@ -695,27 +640,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             });
         });
-
-        // 初始化代办计划状态
-        await PlansManager.checkTodoStatus();
-
-        // 初始加载数据
-        await loadData();
-        console.log('Initial data loaded');
-
+        
         // 检查备注输入框设置
         const showNoteInput = localStorage.getItem('showNoteInput') !== 'false';
         const noteGroup = document.querySelector('#orderForm .note-group');
-        const form = document.querySelector('.data-entry-form');
-
-        if (noteGroup && form) {
+        if (noteGroup) {
             noteGroup.style.display = showNoteInput ? 'block' : 'none';
         }
-
-        // 检查版本并显示通知
-        await checkVersionAndShowNotice();
     } catch (error) {
-        console.error('Initialization error:', error);
+        console.error('初始化失败：', error);
         alert('系统初始化失败');
     }
 });
@@ -759,7 +692,7 @@ const updateUserNoteWithTransaction = async (userId, amount, type, manualNote) =
 
 // 检查版本并显示通知
 async function checkVersionAndShowNotice() {
-    const currentVersion = '5.3';
+    const currentVersion = '5.4';
     const lastVersion = localStorage.getItem('lastVersion');
     
     if (currentVersion !== lastVersion) {
@@ -774,11 +707,8 @@ async function checkVersionAndShowNotice() {
                     </button>
                 </div>
                 <div class="floating-notice-body">
-                    <p>🎉 5.3牛逼版本新功能上线：</p>
+                    <p>🎉 5.4修复BUG</p>
                     <ul>
-                        <li>添加天气API组件</li>
-                        <li>添加加密货币API带K线图组件</li>
-                        <li>添加地址快速查询组件</li>
                         <li>修复已知BUG</li>
                     </ul>
                 </div>
@@ -812,26 +742,107 @@ function closeNotice(button) {
     }, 300);
 }
 
-// 页面加载完成后绑定事件
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('页面加载完成，开始初始化...');
-    
-    // 搜索按钮点击事件
-    document.getElementById('quickHashSearch').addEventListener('click', (e) => {
-        e.preventDefault();
-        console.log('搜索按钮被点击');
-        HashLookup.quickSearch();
-    });
+// 初始化图表
+let chart;
 
-    // 输入框回车事件
-    document.getElementById('quickHashInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            console.log('检测到回车键');
-            HashLookup.quickSearch();
-        }
+// 初始化函数
+const initChart = () => {
+    chart = new ApexCharts(document.querySelector("#trendChart"), {
+        chart: { 
+            type: 'line',
+            height: 400
+        },
+        stroke: { curve: 'smooth' },
+        series: [],
+        xaxis: { type: 'datetime' },
+        colors: ['#17a2b8', '#dc3545', '#28a745'],
+        tooltip: { x: { format: 'dd/MM' } }
     });
-});
+    chart.render();
+};
+
+// 加载数据函数
+const loadData = async () => {
+    try {
+        const monthStr = document.getElementById('monthFilter').value;
+        // 检查月份字符串是否有效
+        if (!monthStr) {
+            console.log('月份未设置，设置为当前月份');
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            document.getElementById('monthFilter').value = `${year}-${month}`;
+        }
+        
+        const [year, month] = document.getElementById('monthFilter').value.split('-');
+        console.log(`加载 ${year}年${month}月 的数据`);
+        
+        const orders = await getAllOrders();
+        console.log('Loaded orders:', orders);
+        
+        // 根据订单日期筛选当月订单，而不是提交时间
+        const monthlyOrders = orders.filter(order => {
+            const orderDate = order.orderDate.split('T')[0];  // 只取日期部分
+            return orderDate.startsWith(`${year}-${month}`);
+        });
+
+        // 更新统计卡片
+        const totals = monthlyOrders.reduce((acc, order) => {
+            if (order.type === 'deposit') {
+                acc.deposit += parseFloat(order.amount);
+            } else {
+                acc.withdrawal += parseFloat(order.amount);
+            }
+            return acc;
+        }, { deposit: 0, withdrawal: 0 });
+
+        document.getElementById('totalDeposit').textContent = totals.deposit.toFixed(2);
+        document.getElementById('totalWithdrawal').textContent = totals.withdrawal.toFixed(2);
+        document.getElementById('netAmount').textContent = (totals.deposit - totals.withdrawal).toFixed(2);
+
+        // 更新趋势图，使用订单日期
+        const dailyData = {};
+        monthlyOrders.forEach(order => {
+            const day = order.orderDate.split('T')[0];
+            dailyData[day] = dailyData[day] || { deposit: 0, withdrawal: 0 };
+            if (order.type === 'deposit') {
+                dailyData[day].deposit += parseFloat(order.amount);
+            } else {
+                dailyData[day].withdrawal += parseFloat(order.amount);
+            }
+        });
+
+        const days = Array.from({length: 31}, (_, i) => {
+            const d = new Date(year, month - 1, i + 1);
+            return TimeZoneManager.formatDate(d);
+        }).filter(d => {
+            const [y, m] = d.split('-');
+            return parseInt(m) === parseInt(month);
+        });
+
+        if (chart) {
+            chart.updateSeries([{
+                name: '充值',
+                data: days.map(d => [new Date(d).getTime(), dailyData[d]?.deposit || 0])
+            }, {
+                name: '出款',
+                data: days.map(d => [new Date(d).getTime(), dailyData[d]?.withdrawal || 0])
+            }, {
+                name: '净额',
+                data: days.map(d => [new Date(d).getTime(), 
+                    (dailyData[d]?.deposit || 0) - (dailyData[d]?.withdrawal || 0)])
+            }]);
+        } else {
+            console.error('图表未初始化');
+        }
+    } catch (error) {
+        console.error('加载数据失败：', error);
+        alert('加载数据失败');
+    }
+};
+
+// 绑定事件
+document.getElementById('monthFilter')?.addEventListener('change', loadData);
 </script>
 </body>
 </html>
